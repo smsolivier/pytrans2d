@@ -13,24 +13,28 @@ class AffineTrans:
 		self.h = np.array([self.hx/2, self.hy/2])
 		self.c = np.array([self.hx/2, self.hy/2])
 
-		self.J = self.hx*self.hy/4 
-		self.F = np.array([[self.hx/2, 0], [0, self.hy/2]])
-		self.Finv = np.array([[2/self.hx, 0], [0, 2/self.hy]])
+		self.j = self.hx*self.hy/4 
+		self.f = np.array([[self.hx/2, 0], [0, self.hy/2]])
+		self.finv = np.array([[2/self.hx, 0], [0, 2/self.hy]])
+		self.finvT = self.finv.transpose()
 
 	def Transform(self, xi):
 		return self.c + self.h*xi 
 
 	def Jacobian(self, xi):
-		return self.J 
+		return self.f 
 
 	def F(self, xi):
-		return self.F 
+		return self.f 
 
 	def Finv(self, xi):
-		return self.Finv 
+		return self.finv 
+
+	def FinvT(self, xi):
+		return self.finvT 
 
 	def InverseMap(self, x):
-		return np.dot(self.Finv, x - self.c)
+		return np.dot(self.finv, x - self.c)
 
 class AffineFaceTrans:
 	def __init__(self, line):

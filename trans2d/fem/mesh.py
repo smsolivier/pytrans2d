@@ -22,7 +22,7 @@ class AffineTrans:
 		return self.c + self.h*xi 
 
 	def Jacobian(self, xi):
-		return self.f 
+		return self.j
 
 	def F(self, xi):
 		return self.f 

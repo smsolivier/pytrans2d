@@ -29,6 +29,9 @@ class AffineTrans:
 	def Finv(self, xi):
 		return self.Finv 
 
+	def InverseMap(self, x):
+		return np.dot(self.Finv, x - self.c)
+
 class RectMesh: 
 	def __init__(self, Nx, Ny, xb=[1,1]):
 		x1d = np.linspace(0, xb[0], Nx+1)
@@ -44,10 +47,6 @@ class RectMesh:
 		self.Nn = len(X) 
 		self.ele = np.zeros((Nx*Ny, 4), dtype=int) 
 		self.Ne = Nx*Ny
-
-		# self.bnodes = np.arange(1, Nx).tolist() + np.arange(Ny*(Nx+1)+1, Ny*(Nx+1)+Nx).tolist() \
-		# 	+ np.arange(0, Ny*(Nx+1)+1, Nx+1).tolist() + np.arange(Nx, Nx+Ny*(Nx+1)+1, Nx+1).tolist()
-		# self.bnodes.sort()
 
 		e = 0 
 		Nnx = Nx+1

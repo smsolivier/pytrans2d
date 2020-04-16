@@ -50,12 +50,47 @@ static PyObject* _polyval_mult(PyObject* self, PyObject* args) {
 			}
 		}
 	}
-	return PyArray_SimpleNewFromData(2, &dims, NPY_DOUBLE, shape); 
+	return PyArray_SimpleNewFromData(2, &dims[0], NPY_DOUBLE, shape); 
+}
+
+static PyObject* _polyval2D(PyObject* self, PyObject* args) {
+	PyArrayObject *Bx, *By, *X; 
+	if (!PyArg_ParseTuple(args, "OOO", &Bx, &By, &X)) return NULL; 
+
+	int nb = PyArray_DIM(Bx, 1); 
+	int nc[2] = {PyArray_DIM(Bx, 0), PyArray_DIM(By, 0)};  
+
+	double *Bxp = PyArray_DATA(Bx); 
+	double *Byp = PyArray_DATA(By); 
+	double *Xp = PyArray_DATA(X); 
+	npy_intp dims = {nb*nb}; 
+	double *sx = malloc(sizeof(double)*nb); 
+	double *sy = malloc(sizeof(double)*nb); 
+	for (int i=0; i<nb; i++) {
+		sx[i] = Bxp[i]; 
+		for (int j=1; j<nc[0]; j++) {
+			sx[i] = sx[i]*Xp[0] + Bxp[j*nb + i]; 
+		}
+		sy[i] = Byp[i]; 
+		for (int j=1; j<nc[1]; j++) {
+			sy[i] = sy[i]*Xp[1] + Byp[j*nb + i]; 
+		}
+	}
+
+	double *shape = malloc(sizeof(double)*dims); 
+	for (int i=0; i<nb; i++) {
+		for (int j=0; j<nb; j++) {
+			int ind = j + i*nb; 
+			shape[ind] = sx[j] * sy[i]; 
+		}
+	}
+	return PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE, shape); 
 }
 
 static PyMethodDef mainMethods[] = {
 	{"PolyVal", _polyval, METH_VARARGS, "horner's method"}, 
 	{"PolyVal2", _polyval_mult, METH_VARARGS, "horner's method for multiple evaluation locations"}, 
+	{"PolyVal2D", _polyval2D, METH_VARARGS, "horner's method for a tensor product 2d polynomial"},
 	{NULL, NULL, 0, NULL}
 }; 
 

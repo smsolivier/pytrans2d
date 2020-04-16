@@ -145,16 +145,9 @@ class RectMesh:
 		for edge in self.graph.es:
 			s = edge.source 
 			t = edge.target 
-			s_node = self.ele[s] 
-			t_node = self.ele[t] 
-			n = len(s_node)
-			for i in range(n):
-				if (s_node[i] in t_node and s_node[(i+1)%n] in t_node): 
-					f1 = i
+			f1, f2 = self.GetOrientation(s,t)
 
-				if (t_node[i] in s_node and t_node[(i+1)%n] in s_node):
-					f2 = i
-
+			n = 4
 			rline1 = ref_geom[[f1, (f1+1)%n], :]
 			rline2 = ref_geom[[(f2+1)%n, f2], :] # rotate 
 			nodes = self.ele[s, [f1, (f1+1)%n]]
@@ -194,6 +187,19 @@ class RectMesh:
 						bfn
 						))
 					bfn += 1 
+
+	def GetOrientation(self, s, t):
+		s_node = self.ele[s] 
+		t_node = self.ele[t] 
+		n = len(s_node)
+		for i in range(n):
+			if (s_node[i] in t_node and s_node[(i+1)%n] in t_node): 
+				f1 = i
+
+			if (t_node[i] in s_node and t_node[(i+1)%n] in s_node):
+				f2 = i
+
+		return f1, f2 
 
 	def WriteVTK(self, fname, point=None, cell=None):
 		''' plot discontinuous (ie shared nodes are redundantly defined) ''' 

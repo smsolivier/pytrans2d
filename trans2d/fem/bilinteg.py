@@ -63,17 +63,32 @@ def WeakConvectionIntegrator(el, trans, c, qorder):
 
 	return elmat 
 
-def DomainIntegrator(el, trans, c, qorder):
-	elvec = np.zeros(el.Nn)
-	ip, w = quadrature.Get(qorder)
+def UpwindTraceIntegrator(el1, el2, face, c, qorder):
+	elmat = np.zeros((2*el1.Nn, 2*el2.Nn))
+	ip, w = quadrature.Get1D(qorder)
+
+	j = np.zeros(el1.Nn+el2.Nn)
+	a = np.zeros(el1.Nn+el2.Nn)
 
 	for n in range(len(w)):
-		s = el.CalcShape(ip[n])
-		X = trans.Transform(ip[n])
-		elvec += s * c(X) * trans.Jacobian(ip[n]) * w[n] 
+		xi1 = face.ipt1.Transform(ip[n]) 
+		xi2 = face.ipt2.Transform(ip[n]) 
 
-	return elvec 
+		s1 = el1.CalcShape(xi1)
+		s2 = el2.CalcShape(xi2)
+		j[:el1.Nn] = s1 
+		j[el1.Nn:] = -s2 
 
+		a[:el1.Nn] = s1 
+		a[el1.Nn:] = s2 
+
+		cdotn = np.dot(c, face.face.Normal(ip[n]))
+		alpha = .5*face.face.Jacobian(ip[n])*w[n]
+
+		linalg.AddOuter(alpha*cdotn, j, a, elmat)
+		linalg.AddOuter(alpha*abs(cdotn), j, j, elmat) 
+
+	return elmat 
 
 def Assemble(space, integrator, c, qorder):
 	A = COOMatrix(space.Nu)
@@ -85,12 +100,27 @@ def Assemble(space, integrator, c, qorder):
 
 	return A.Get()
 
-def AssembleRHS(space, integrator, c, qorder):
-	v = np.zeros(space.Nu)
+def FaceAssemble(space, integrator, c, qorder):
+	A = COOMatrix(space.Nu)
+	for f in range(len(space.mesh.iface)):
+		face = space.mesh.iface[f] 
+		elmat = integrator(space.el, space.el, face, c, qorder)
+		dofs1 = space.dofs[face.ElNo1] 
+		dofs2 = space.dofs[face.ElNo2]
+		dofs = np.concatenate((dofs1, dofs2))
+		A[dofs, dofs] = elmat 
 
-	for e in range(space.Ne):
-		trans = space.mesh.trans[e]
-		elvec = integrator(space.el, trans, c, qorder)
-		v[space.dofs[e]] += elvec 
+	return A.Get()
 
-	return v 
+def BdrFaceAssemble(space, integrator, c, qorder):
+	A = COOMatrix(space.Nu)
+	for f in range(len(space.mesh.bface)):
+		face = space.mesh.bface[f]
+		elmat = integrator(space.el, space.el, face, c, qorder)
+		dofs = space.dofs[face.ElNo1] 
+		A[dofs, dofs] = elmat 
+
+	return A.Get()
+
+def FaceAssembleAll(space, integrator, c, qorder):
+	return FaceAssemble(space, integrator, c, qorder) + BdrFaceAssemble(space, integrator, c, qorder)

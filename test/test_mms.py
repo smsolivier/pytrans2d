@@ -8,7 +8,6 @@ import pytest
 def h1diffusion(Ne, p):
 	mesh = RectMesh(Ne, Ne)
 	space = H1Space(mesh, LagrangeBasis, p)
-	print('Nu = {}'.format(space.Nu))
 
 	K = Assemble(space, DiffusionIntegrator, lambda x: 1, p)
 	M = Assemble(space, MassIntegrator, lambda x: .1, p)
@@ -26,9 +25,26 @@ def h1diffusion(Ne, p):
 	err = T.L2Error(lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), p)
 	return err 
 
+def convection(Ne, p):
+	mesh = RectMesh(Ne, Ne)
+	space = L2Space(mesh, LegendreBasis, p)
+	Omega = np.array([1,0])
+
+	C = Assemble(space, WeakConvectionIntegrator, Omega, (p-1)*p)
+	M = Assemble(space, MassIntegrator, lambda x: .5, p*p) 
+	F = FaceAssembleAll(space, UpwindTraceIntegrator, Omega, p*p)
+	I = FaceAssembleRHS(space, InflowIntegrator, [Omega, lambda x,Omega: 1], p*p)
+
+	A = F + C + M 
+
+	psi = GridFunction(space)
+	psi.data = spla.spsolve(A, I)
+
+	return psi.L2Error(lambda x: np.exp(-.5*x[0]), 2*p+1)
+
 Ne = 5
 @pytest.mark.parametrize('p', [1, 2, 3, 4])
-@pytest.mark.parametrize('solver', [h1diffusion])
+@pytest.mark.parametrize('solver', [h1diffusion, convection])
 def test_ooa(solver, p):
 	E1 = solver(Ne, p)
 	E2 = solver(2*Ne, p)

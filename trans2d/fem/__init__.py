@@ -3,5 +3,6 @@ from .basis import *
 from .element import *
 from .fespace import *
 from .quadrature import *
-from .integrators import * 
+from .bilinteg import *
+from .lininteg import *
 from .gridfunc import * 

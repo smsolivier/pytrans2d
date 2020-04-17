@@ -26,5 +26,6 @@ setuptools.setup(
 		],
 	python_requires=">=3.6", 
 	install_requires=['numpy', 'scipy', 'termcolor', 'pyamg', 'matplotlib', 'quadpy', 'pathlib', 'python-igraph'], 
-	ext_modules=[horner, linalg]
+	ext_modules=[horner, linalg], 
+	include_package_data=True
 	)

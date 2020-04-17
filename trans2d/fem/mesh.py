@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import warnings
 import igraph 
 from ..ext.horner import PolyVal2D
 from ..ext import linalg 
@@ -34,7 +35,7 @@ class AffineTrans:
 	def FinvT(self, xi):
 		return self.finvT 
 
-	def InverseMap(self, x):
+	def InverseMap(self, x, niter=20, tol=1e-14):
 		return np.dot(self.finv, x - self.c)
 
 class LinearTrans:
@@ -63,14 +64,17 @@ class LinearTrans:
 	def Jacobian(self, xi):
 		return np.linalg.det(self.F(xi))
 
-	def InverseMap(self, x):
+	def InverseMap(self, x, niter=20, tol=1e-14):
 		xi = np.array([0,0])
-		for n in range(20):
+		for n in range(niter):
 			xi0 = xi.copy()
 			xi = np.dot(self.Finv(xi0), (x - self.Transform(xi0))) + xi0 
 			norm = np.linalg.norm(xi - xi0)
-			if (norm < 1e-14):
+			if (norm < tol):
 				break 
+
+		if (norm>tol):
+			warnings.warn('inverse map not converged. final tol = {:.3e}'.format(norm), stacklevel=2)
 
 		return xi 
 

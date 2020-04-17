@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import matplotlib.pyplot as plt
-
 import igraph 
 
 class AffineTrans:
@@ -129,16 +127,16 @@ class RectMesh:
 		# build graph
 		self.graph = igraph.Graph()
 		self.graph.add_vertices(self.Ne)
+		edges = []
 		for i in range(Ny):
 			for j in range(Nx):
 				e = j + i*Nx 
-				edges = []
 				if (j<Nx-1):
 					edges.append((e,e+1))
 				if (i<Ny-1):
 					edges.append((e,e+Nx))
 
-				self.graph.add_edges(edges)
+		self.graph.add_edges(edges)
 
 		bseq = self.graph.vs(_degree_lt=4)
 		self.bel = [i.index for i in bseq] # element ids of boundary elements 

@@ -42,6 +42,30 @@ static PyObject* _AddOuter(PyObject* self, PyObject* args) {
 	return Py_None; 
 }
 
+static PyObject* _Mult(PyObject* self, PyObject* args) {
+	PyArrayObject *A, *B, *C; 
+	double alpha, beta; 
+	if (!PyArg_ParseTuple(args, "dOOdO", &alpha, &A, &B, &beta, &C)) return NULL; 
+
+	int m = PyArray_DIM(A, 0); 
+	int n = PyArray_DIM(A, 1); 
+	int p = PyArray_DIM(B, 1); 
+
+	double *a = PyArray_DATA(A); 
+	double *b = PyArray_DATA(B); 
+	double *c = PyArray_DATA(C); 
+	for (int i=0; i<m; i++) {
+		for (int j=0; j<p; j++) {
+			c[j+i*p] = beta*c[j+p*i]; 
+			for (int k=0; k<n; k++) {
+				c[j+p*i] += alpha*a[k+i*n]*b[j+k*p]; 
+			}
+		}
+	}
+	Py_INCREF(Py_None); 
+	return Py_None; 
+}
+
 static PyObject* _TransMult(PyObject* self, PyObject* args) {
 	PyArrayObject *A, *B, *C; 
 	double alpha, beta; 
@@ -69,6 +93,7 @@ static PyObject* _TransMult(PyObject* self, PyObject* args) {
 static PyMethodDef mainMethods[] = {
 	{"Outer", _outer, METH_VARARGS, "outer product of two vectors"}, 
 	{"AddOuter", _AddOuter, METH_VARARGS, "outer product of two row vectors multiplied by a constant"}, 
+	{"Mult", _Mult, METH_VARARGS, "multiply accumulate matrices"}, 
 	{"TransMult", _TransMult, METH_VARARGS, "matrix multiply"}, 
 	{NULL, NULL, 0, NULL}
 }; 

@@ -49,7 +49,7 @@ class H1Space(FESpace):
 
 			self.dofs[e] = vdofs
 
-		self.Nu = 2*c
+		self.Nu = self.vdim*c
 
 		self.bnodes = [] 
 		for f in self.mesh.bface:

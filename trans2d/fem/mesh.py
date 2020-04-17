@@ -40,8 +40,7 @@ class AffineFaceTrans:
 		self.F = np.dot(.5*np.array([-1,1]), line)
 		self.c = .5*np.array([line[1,0] + line[0,0], line[1,1] + line[0,1]])
 		self.J = np.sqrt(np.dot(self.F, self.F))
-		R = np.array([[np.cos(-np.pi/2), -np.sin(-np.pi/2)], [np.sin(-np.pi/2), np.cos(-np.pi/2)]])
-		nor = np.dot(R, self.F)
+		nor = np.array([self.F[1], -self.F[0]])
 		self.nor = nor/np.linalg.norm(nor)
 
 	def Transform(self, xi):

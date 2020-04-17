@@ -11,7 +11,7 @@ class AffineTrans:
 		self.hx = box[1,0] - box[0,0] 
 		self.hy = box[2,1] - box[1,1] 
 		self.h = np.array([self.hx/2, self.hy/2])
-		self.c = np.array([self.hx/2, self.hy/2])
+		self.c = np.array([box[1,0] + box[0,0], box[2,1] + box[1,1]])*.5
 
 		self.j = self.hx*self.hy/4 
 		self.f = np.array([[self.hx/2, 0], [0, self.hy/2]])

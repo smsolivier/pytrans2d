@@ -51,6 +51,18 @@ def MassIntegrator(el, trans, c, qorder):
 
 	return elmat 
 
+def WeakConvectionIntegrator(el, trans, c, qorder):
+	elmat = np.zeros((el.Nn, el.Nn))
+	ip, w = quadrature.Get(qorder)
+
+	for n in range(len(w)):
+		pgs = el.CalcPhysGradShape(trans, ip[n]) 
+		s = el.CalcShape(ip[n])
+		cpgs = np.dot(c, pgs)
+		linalg.AddOuter(-trans.Jacobian(ip[n])*w[n], cpgs, s, elmat) 
+
+	return elmat 
+
 def DomainIntegrator(el, trans, c, qorder):
 	elvec = np.zeros(el.Nn)
 	ip, w = quadrature.Get(qorder)

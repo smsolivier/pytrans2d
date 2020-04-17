@@ -31,3 +31,13 @@ def test_assemble():
 	K = Assemble(space, DiffusionIntegrator, lambda x: 1, 0)
 
 	assert(spla.norm(K - K.transpose())==pytest.approx(0))
+
+def test_wci():
+	cx = 1 
+	cy = 1 
+	W = WeakConvectionIntegrator(el, trans, [cx,cy], 2)
+	Wex = 1/12*np.array([[2*(cx+cy), 2*cx+cy, cx+2*cy, cx+cy], 
+		[-2*cx+cy, 2*(-cx+cy), -cx+cy, -cx+2*cy], 
+		[cx-2*cy, cx-cy, 2*(cx-cy), 2*cx-cy], 
+		[-cx-cy, -cx-2*cy, -2*cx-cy, -2*(cx+cy)]])
+	assert(W==pytest.approx(Wex))

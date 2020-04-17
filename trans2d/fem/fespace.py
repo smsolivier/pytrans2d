@@ -45,7 +45,7 @@ class H1Space(FESpace):
 		for e in range(self.Ne):
 			vdofs = sdofs[e]
 			for d in range(1, self.vdim):
-				vdofs = np.append(vdofs, sdofs[e] + c) 
+				vdofs = np.append(vdofs, sdofs[e] + c*d) 
 
 			self.dofs[e] = vdofs
 
@@ -56,3 +56,21 @@ class H1Space(FESpace):
 			self.bnodes += self.dofs[f.ElNo1, n_on_face[f.f1]].tolist()
 
 		self.bnodes = np.unique(self.bnodes)
+
+class L2Space(FESpace):
+	def __init__(self, mesh, btype, p, vdim=1):
+		FESpace.__init__(self, mesh, btype, p, vdim)
+		c = 0
+		sdofs = np.zeros((self.Ne, self.el.Nn))
+		for v in self.mesh.graph.bfsiter(0):
+			sdofs[v.index] = np.arange(c, self.el.Nn+c)
+			c += self.el.Nn
+
+		for e in range(self.Ne):
+			vdofs = sdofs[e] 
+			for d in range(1, self.vdim):
+				vdofs = np.append(vdofs, sdofs[e]+c*d)
+
+			self.dofs[e] = vdofs 
+
+		self.Nu = self.vdim*c 

@@ -2,6 +2,9 @@
 
 import numpy as np
 import igraph 
+from ..ext.horner import PolyVal2D
+from ..ext import linalg 
+from .basis import LagrangeBasis
 
 class AffineTrans:
 	def __init__(self, box):
@@ -33,6 +36,43 @@ class AffineTrans:
 
 	def InverseMap(self, x):
 		return np.dot(self.finv, x - self.c)
+
+class LinearTrans:
+	def __init__(self, box):
+		self.box = box 
+		self.basis = LagrangeBasis(1)
+
+	def Transform(self, xi):
+		shape = PolyVal2D(self.basis.B, self.basis.B, np.array(xi))
+		return np.dot(shape, self.box)
+
+	def F(self, xi):
+		gs = np.zeros((2, 4))
+		gs[0,:] = PolyVal2D(self.basis.dB, self.basis.B, np.array(xi))
+		gs[1,:] = PolyVal2D(self.basis.B, self.basis.dB, np.array(xi))
+		return linalg.Mult(1., gs, self.box) 
+
+	def Finv(self, xi):
+		F = self.F(xi)
+		return np.linalg.inv(F) 
+
+	def FinvT(self, xi):
+		F = self.F(xi)
+		return np.linalg.inv(F).transpose()
+
+	def Jacobian(self, xi):
+		return np.linalg.det(self.F(xi))
+
+	def InverseMap(self, x):
+		xi = np.array([0,0])
+		for n in range(20):
+			xi0 = xi.copy()
+			xi = np.dot(self.Finv(xi0), (x - self.Transform(xi0))) + xi0 
+			norm = np.linalg.norm(xi - xi0)
+			if (norm < 1e-14):
+				break 
+
+		return xi 
 
 class AffineFaceTrans:
 	def __init__(self, line):

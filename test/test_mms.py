@@ -42,9 +42,25 @@ def convection(Ne, p):
 
 	return psi.L2Error(lambda x: np.exp(-.5*x[0]), 2*p+1)
 
+def dgdiffusion(Ne, p):
+	mesh = RectMesh(Ne, Ne)
+	space = L2Space(mesh, LegendreBasis, p) 
+
+	kappa = 100*10**p 
+	K = Assemble(space, DiffusionIntegrator, lambda x: 1, 2*p+1)
+	F = FaceAssembleAll(space, InteriorPenaltyIntegrator, kappa, 2*p+1)
+	f = AssembleRHS(space, DomainIntegrator, lambda x: 2*np.pi**2*np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*p+1)
+
+	A = K+F 
+	T = GridFunction(space)
+	T.data = spla.spsolve(A, f)
+
+	err = T.L2Error(lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*p+1)
+	return err
+
 Ne = 5
 @pytest.mark.parametrize('p', [1, 2, 3, 4])
-@pytest.mark.parametrize('solver', [h1diffusion, convection])
+@pytest.mark.parametrize('solver', [h1diffusion, convection, dgdiffusion])
 def test_ooa(solver, p):
 	E1 = solver(Ne, p)
 	E2 = solver(2*Ne, p)

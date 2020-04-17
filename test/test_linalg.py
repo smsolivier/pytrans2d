@@ -9,7 +9,7 @@ def test_outer():
 	v = np.random.rand(4)
 	w = np.random.rand(6)
 
-	outer = Outer(v,w)
+	outer = Outer(1., v,w)
 	outer2 = np.outer(v,w)
 
 	assert(np.linalg.norm(outer - outer2)==pytest.approx(0))

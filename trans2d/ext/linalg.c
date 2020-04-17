@@ -4,7 +4,8 @@
 
 static PyObject* _outer(PyObject* self, PyObject* args) {
 	PyArrayObject *v1, *v2; 
-	if (!PyArg_ParseTuple(args, "OO", &v1, &v2)) return NULL; 
+	double alpha; 
+	if (!PyArg_ParseTuple(args, "dOO", &alpha, &v1, &v2)) return NULL; 
 
 	int m = PyArray_DIM(v1, 0); 
 	int n = PyArray_DIM(v2, 0); 
@@ -15,7 +16,7 @@ static PyObject* _outer(PyObject* self, PyObject* args) {
 	const npy_intp dims[2] = {m, n}; 
 	for (int i=0; i<m; i++) {
 		for (int j=0; j<n; j++) {
-			mat[j+i*n] = pv1[i] * pv2[j]; 
+			mat[j+i*n] = alpha*pv1[i] * pv2[j]; 
 		}
 	}
 	return PyArray_SimpleNewFromData(2, &dims[0], NPY_DOUBLE, mat); 

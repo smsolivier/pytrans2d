@@ -20,11 +20,11 @@ class GridFunction:
 		return self.space.el.InterpolateGradient(trans, xi, self.GetDof(e))
 
 	def Project(self, func):
-		for e in range(space.Ne):
+		for e in range(self.space.Ne):
 			trans = self.space.mesh.trans[e]
 			vals = np.zeros(self.space.el.Nn)
 			for i in range(self.space.el.Nn):
-				X = space.el.Transform(self.el.nodes[i])
+				X = trans.Transform(self.space.el.nodes[i])
 				vals[i] = func(X)
 
 			self.SetDof(e, vals)

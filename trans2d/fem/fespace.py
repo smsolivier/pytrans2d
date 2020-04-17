@@ -50,3 +50,9 @@ class H1Space(FESpace):
 			self.dofs[e] = vdofs
 
 		self.Nu = 2*c
+
+		self.bnodes = [] 
+		for f in self.mesh.bface:
+			self.bnodes += self.dofs[f.ElNo1, n_on_face[f.f1]].tolist()
+
+		self.bnodes = np.unique(self.bnodes)

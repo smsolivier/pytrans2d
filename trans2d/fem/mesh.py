@@ -62,20 +62,23 @@ class AffineFaceTrans:
 		return self.nor 
 
 class FaceInfo:
-	def __init__(self, els, iptrans, trans, ftrans, fno=-1):
+	def __init__(self, els, iptrans, trans, ftrans, orient, fno=-1):
 		self.ElNo1 = els[0]
 		self.ipt1 = iptrans[0]
 		self.trans1 = trans[0] 
+		self.f1 = orient[0]
 		if (len(els)==1):
 			self.boundary = True 
 			self.ElNo2 = els[0] 
 			self.ipt2 = iptrans[0] 
 			self.trans2 = trans[0] 
+			self.f2 = self.f1 
 		else:
 			self.boundary = False 
 			self.ElNo2 = els[1]
 			self.ipt2 = iptrans[1] 
 			self.trans2 = trans[1] 
+			self.f2 = orient[1]
 
 		self.face = ftrans 
 		self.fno = fno 
@@ -87,6 +90,7 @@ class FaceInfo:
 			self.face.line[0,0], self.face.line[0,1], self.face.line[1,0], self.face.line[1,1])
 		s += '   nor = ({:.3f},{:.3f})\n'.format(self.face.Normal(0)[0], self.face.Normal(0)[1])
 		s += '   bdr = {}\n'.format(self.boundary) 
+		s += '   orient = {}, {}\n'.format(self.f1, self.f2)
 		return s 
 
 class RectMesh: 
@@ -157,7 +161,8 @@ class RectMesh:
 				[s,t], # element numbers 
 				[AffineFaceTrans(rline1), AffineFaceTrans(rline2)], # 1D -> 2D transformations
 				[self.trans[s], self.trans[t]], # 2D element transformations 
-				AffineFaceTrans(pline), 
+				AffineFaceTrans(pline), # transformation of face
+				[f1, f2], # face orientations 
 				edge.index # face number 
 				))
 
@@ -184,6 +189,7 @@ class RectMesh:
 						[AffineFaceTrans(rline)], 
 						[self.trans[e]], 
 						AffineFaceTrans(pline), 
+						[f], 
 						bfn
 						))
 					bfn += 1 

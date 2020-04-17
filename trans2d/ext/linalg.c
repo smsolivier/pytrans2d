@@ -21,7 +21,7 @@ static PyObject* _outer(PyObject* self, PyObject* args) {
 	return PyArray_SimpleNewFromData(2, &dims[0], NPY_DOUBLE, mat); 
 }
 
-static PyObject* _AddMultVtW(PyObject* self, PyObject* args) {
+static PyObject* _AddOuter(PyObject* self, PyObject* args) {
 	PyArrayObject *v, *w, *elmat; 
 	double alpha; 
 	if (!PyArg_ParseTuple(args, "dOOO", &alpha, &v, &w, &elmat)) return NULL; 
@@ -38,12 +38,38 @@ static PyObject* _AddMultVtW(PyObject* self, PyObject* args) {
 			pm[j+i*n] += pv[i] * pw[j] * alpha; 
 		}
 	}
+	Py_INCREF(Py_None); 
+	return Py_None; 
+}
+
+static PyObject* _TransMult(PyObject* self, PyObject* args) {
+	PyArrayObject *A, *B, *C; 
+	double alpha, beta; 
+	if (!PyArg_ParseTuple(args, "dOOdO", &alpha, &A, &B, &beta, &C)) return NULL; 
+
+	int m = PyArray_DIM(A, 1); 
+	int n = PyArray_DIM(A, 0); 
+	int p = PyArray_DIM(B, 1); 
+
+	double *a = PyArray_DATA(A); 
+	double *b = PyArray_DATA(B); 
+	double *c = PyArray_DATA(C); 
+	for (int i=0; i<m; i++) {
+		for (int j=0; j<p; j++) {
+			c[j+i*p] = beta*c[j+p*i]; 
+			for (int k=0; k<n; k++) {
+				c[j+p*i] += alpha*a[i+k*m]*b[j+k*p]; 
+			}
+		}
+	}
+	Py_INCREF(Py_None); 
 	return Py_None; 
 }
 
 static PyMethodDef mainMethods[] = {
 	{"Outer", _outer, METH_VARARGS, "outer product of two vectors"}, 
-	{"AddMultVtW", _AddMultVtW, METH_VARARGS, "outer product of two row vectors multiplied by a constant"}, 
+	{"AddOuter", _AddOuter, METH_VARARGS, "outer product of two row vectors multiplied by a constant"}, 
+	{"TransMult", _TransMult, METH_VARARGS, "matrix multiply"}, 
 	{NULL, NULL, 0, NULL}
 }; 
 

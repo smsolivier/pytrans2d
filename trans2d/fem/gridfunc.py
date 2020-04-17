@@ -32,7 +32,6 @@ class GridFunction:
 	def L2Error(self, ex, qorder):
 		ip, w = quadrature.Get(qorder)
 		l2 = 0 
-		ip, w = quadrature.Get(qorder)
 		for e in range(self.space.Ne):
 			el = self.space.el 
 			trans = self.space.mesh.trans[e]
@@ -45,6 +44,17 @@ class GridFunction:
 				l2 += np.dot(diff, diff) * w[n] * trans.Jacobian(ip[n])
 
 		return np.sqrt(l2) 
+
+	def L2Diff(self, gf, qorder):
+		ip, w = quadrature.Get(qorder)
+		l2 = 0 
+		for e in range(self.space.Ne):
+			trans = self.space.mesh.trans[e]
+			for n in range(len(w)):
+				this = self.Interpolate(e, ip[n])
+				that = gf.Interpolate(e, ip[n])
+				l2 += np.dot(this-that, this-that) * w[n] * trans.Jacobian(ip[n])
+		return np.sqrt(l2)
 
 	def ElementData(self):
 		data = np.zeros(self.space.Ne)

@@ -6,6 +6,7 @@ import sys
 class FESpace:
 	def __init__(self, mesh, btype, p, vdim=1):
 		self.mesh = mesh 
+		self.p = p
 		self.el = element.Element(btype, p)
 		self.vdim = vdim 
 		self.Ne = mesh.Ne 

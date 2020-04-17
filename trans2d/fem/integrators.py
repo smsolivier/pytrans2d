@@ -36,7 +36,7 @@ def DiffusionIntegrator(el, trans, c, qorder):
 	for n in range(len(w)):
 		pgs = el.CalcPhysGradShape(trans, ip[n]) 
 		X = trans.Transform(ip[n])
-		linalg.TransMult(trans.Jacobian(ip[n])*c(X)*w[n], pgs, pgs, 1., elmat)
+		linalg.AddTransMult(trans.Jacobian(ip[n])*c(X)*w[n], pgs, pgs, 1., elmat)
 
 	return elmat 
 

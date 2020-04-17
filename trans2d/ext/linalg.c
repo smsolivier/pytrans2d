@@ -43,6 +43,31 @@ static PyObject* _AddOuter(PyObject* self, PyObject* args) {
 }
 
 static PyObject* _Mult(PyObject* self, PyObject* args) {
+	PyArrayObject *A, *B; 
+	double alpha; 
+	if (!PyArg_ParseTuple(args, "dOO", &alpha, &A, &B)) return NULL; 
+
+	int m = PyArray_DIM(A, 0); 
+	int n = PyArray_DIM(A, 1); 
+	int p = PyArray_DIM(B, 1); 
+
+	double *a = PyArray_DATA(A); 
+	double *b = PyArray_DATA(B); 
+	double *c = malloc(sizeof(double)*m*p); 
+	npy_intp dims[2] = {m,p}; 
+	for (int i=0; i<m; i++) {
+		for (int j=0; j<p; j++) {
+			c[j+i*p] = 0.; 
+			for (int k=0; k<n; k++) {
+				c[j+i*p] += a[k+i*n]*b[j+k*p]; 
+			}
+			c[j+i*p] *= alpha; 
+		}
+	}
+	return PyArray_SimpleNewFromData(2, &dims[0], NPY_DOUBLE, c); 
+}
+
+static PyObject* _AddMult(PyObject* self, PyObject* args) {
 	PyArrayObject *A, *B, *C; 
 	double alpha, beta; 
 	if (!PyArg_ParseTuple(args, "dOOdO", &alpha, &A, &B, &beta, &C)) return NULL; 
@@ -66,7 +91,7 @@ static PyObject* _Mult(PyObject* self, PyObject* args) {
 	return Py_None; 
 }
 
-static PyObject* _TransMult(PyObject* self, PyObject* args) {
+static PyObject* _AddTransMult(PyObject* self, PyObject* args) {
 	PyArrayObject *A, *B, *C; 
 	double alpha, beta; 
 	if (!PyArg_ParseTuple(args, "dOOdO", &alpha, &A, &B, &beta, &C)) return NULL; 
@@ -93,8 +118,9 @@ static PyObject* _TransMult(PyObject* self, PyObject* args) {
 static PyMethodDef mainMethods[] = {
 	{"Outer", _outer, METH_VARARGS, "outer product of two vectors"}, 
 	{"AddOuter", _AddOuter, METH_VARARGS, "outer product of two row vectors multiplied by a constant"}, 
-	{"Mult", _Mult, METH_VARARGS, "multiply accumulate matrices"}, 
-	{"TransMult", _TransMult, METH_VARARGS, "matrix multiply"}, 
+	{"Mult", _Mult, METH_VARARGS, "multiply two matrices"}, 
+	{"AddMult", _AddMult, METH_VARARGS, "multiply accumulate matrices"}, 
+	{"AddTransMult", _AddTransMult, METH_VARARGS, "matrix transpose multiply accumulate"}, 
 	{NULL, NULL, 0, NULL}
 }; 
 

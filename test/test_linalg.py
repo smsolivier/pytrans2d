@@ -24,6 +24,31 @@ def test_outeradd():
 
 	assert(np.linalg.norm(ex - z)==pytest.approx(0))
 
+def test_mult():
+	m = 3 
+	n = 2 
+	p = 5 
+
+	A = np.random.random((m,n))
+	B = np.random.random((n,p))
+
+	C = Mult(2., A, B)
+	Cex = np.dot(A, B)*2 
+	assert(C==pytest.approx(Cex))
+
+def test_addmult():
+	m = 3 
+	n = 2 
+	p = 5 
+
+	A = np.random.random((m,n))
+	B = np.random.random((n,p))
+	C = np.random.random((m,p))
+	Cex = 3*C + np.dot(A, B)*2 
+
+	AddMult(2., A, B, 3, C)
+	assert(C==pytest.approx(Cex))
+
 def test_transmult():
 	m = 3 
 	n = 2 
@@ -34,6 +59,6 @@ def test_transmult():
 	C = np.random.random((m,p))
 
 	ex = np.dot(A.transpose(), B)*2 + C 
-	TransMult(2., A, B, 1., C)
+	AddTransMult(2., A, B, 1., C)
 
 	assert(np.linalg.norm(ex - C)==pytest.approx(0))

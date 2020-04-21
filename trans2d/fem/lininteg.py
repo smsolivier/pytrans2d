@@ -15,6 +15,17 @@ def DomainIntegrator(el, trans, c, qorder):
 
 	return elvec 
 
+def VectorDomainIntegrator(el, trans, c, qorder):
+	elvec = np.zeros(2*el.Nn)
+	ip, w = quadrature.Get(qorder)
+
+	for n in range(len(w)):
+		vs = el.CalcVShape(ip[n])
+		X = trans.Transform(ip[n])
+		elvec += np.dot(vs.transpose(), c(X)) * w[n] * trans.Jacobian(ip[n])
+
+	return elvec 
+
 def InflowIntegrator(el, face, c, qorder):
 	elvec = np.zeros(el.Nn)
 	ip, w = quadrature.Get1D(qorder)

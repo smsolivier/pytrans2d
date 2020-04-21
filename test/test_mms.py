@@ -121,9 +121,28 @@ def p1sa(Ne, p):
 
 	return phi.L2Error(phi_ex, 2*p+1)
 
-Ne = 5
+def vef(Ne, p):
+	mesh = RectMesh(Ne, Ne)
+	space = L2Space(mesh, LegendreBasis, p)
+	phi_space = L2Space(mesh, LegendreBasis, p)
+	Jspace = H1Space(mesh, LobattoBasis, p+1, 2)
+	quad = LevelSym(4)
+	eps = 1e-2
+	sigma_t = lambda x: 1/eps
+	sigma_s = lambda x: 1/eps - eps 
+	psi_ex, phi_ex, Q = TransportMMS(1, 1, 0, 10, 0, sigma_t, sigma_s)
+	sweep = DirectSweeper(space, quad, sigma_t, sigma_s, Q, psi_ex, True)
+	sn = VEF(phi_space, Jspace, sweep)
+	psi = TVector(space, quad)
+	psi.Project(psi_ex)
+	phi, J = sn.Mult(psi) 
+
+	return phi.L2Error(phi_ex, 2*p+1)	
+
+Ne = 10
 @pytest.mark.parametrize('p', [1, 2, 3, 4])
-@pytest.mark.parametrize('solver', [h1diffusion, convection, dgdiffusion, sn_direct, sn_sweep, p1sa])
+@pytest.mark.parametrize('solver', [h1diffusion, convection, dgdiffusion, 
+	sn_direct, sn_sweep, p1sa, vef])
 def test_ooa(solver, p):
 	E1 = solver(Ne, p)
 	E2 = solver(2*Ne, p)

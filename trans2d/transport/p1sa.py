@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sp 
 import scipy.sparse.linalg as spla 
 import time 
-from termcolor import colored
+import warnings 
 
 from . import sn 
 from .. import fem 
@@ -163,6 +163,6 @@ class P1SA(sn.Sn):
 				break 
 
 		if (norm > tol):
-			print(colored('WARNING not converged! Final tol = {:.3e}'.format(norm), 'red'))
+			warnings.warn('source iteration not converged. final tol = {:.3e}'.format(norm), stacklevel=2)
 
 		return phi		

@@ -1,5 +1,5 @@
 import time 
-from termcolor import colored
+import warnings 
 
 from .. import fem 
 
@@ -35,6 +35,6 @@ class Sn:
 				break 
 
 		if (norm > tol):
-			print(colored('WARNING not converged! Final tol = {:.3e}'.format(norm), 'red'))
+			warnings.warn('source iteration not converged. final tol = {:.3e}'.format(norm), stacklevel=2)
 
 		return phi

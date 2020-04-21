@@ -1,5 +1,6 @@
 import numpy as np 
 from ..ext.horner import PolyVal2D
+from ..ext import linalg 
 
 class Element:
 	def __init__(self, btype, p):
@@ -29,7 +30,7 @@ class Element:
 
 	def CalcPhysGradShape(self, trans, xi):
 		gs = self.CalcGradShape(xi)
-		return np.dot(trans.FinvT(xi), gs)
+		return linalg.TransMult(trans.Finv(xi), gs)
 
 	def CalcVGradShape(self, xi):
 		gs = self.CalcGradShape(xi)

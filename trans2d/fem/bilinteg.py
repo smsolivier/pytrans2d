@@ -51,6 +51,26 @@ def MassIntegrator(el, trans, c, qorder):
 
 	return elmat 
 
+def MixMassIntegrator(el1, el2, trans, c, qorder):
+	elmat = np.zeros((el1.Nn, el2.Nn))
+	ip, w = quadrature.Get(qorder)
+
+	for n in range(len(w)):
+		s1 = el1.CalcShape(ip[n])
+		s2 = el2.CalcShape(ip[n])
+		X = trans.Transform(ip[n])
+		linalg.AddOuter(trans.Jacobian(ip[n])*c(X)*w[n], s1, s2, elmat) 
+
+	return elmat 
+
+def VectorMassIntegrator(el, trans, c, qorder):
+	elmat = np.zeros((2*el.Nn, 2*el.Nn))
+	ip, w = quadrature.Get(qorder)
+	M = MassIntegrator(el, trans, c, qorder)
+	elmat[:el.Nn,:el.Nn] = M
+	elmat[el.Nn:,el.Nn:] = M 
+	return elmat 
+
 def WeakConvectionIntegrator(el, trans, c, qorder):
 	elmat = np.zeros((el.Nn, el.Nn))
 	ip, w = quadrature.Get(qorder)
@@ -60,6 +80,28 @@ def WeakConvectionIntegrator(el, trans, c, qorder):
 		s = el.CalcShape(ip[n])
 		cpgs = np.dot(c, pgs)
 		linalg.AddOuter(-trans.Jacobian(ip[n])*w[n], cpgs, s, elmat) 
+
+	return elmat 
+
+def MixDivIntegrator(el1, el2, trans, c, qorder):
+	elmat = np.zeros((el1.Nn, 2*el2.Nn))
+	ip, w = quadrature.Get(qorder)
+
+	for n in range(len(w)):
+		s = el1.CalcShape(ip[n])
+		div = el2.CalcPhysGradShape(trans, ip[n]).flatten()
+		linalg.AddOuter(trans.Jacobian(ip[n])*w[n]*c, s, div, elmat)
+
+	return elmat 
+
+def WeakMixDivIntegrator(el1, el2, trans, c, qorder):
+	elmat = np.zeros((el1.Nn, 2*el2.Nn))
+	ip, w = quadrature.Get(qorder)
+
+	for n in range(len(w)):
+		pgs = el1.CalcPhysGradShape(trans, ip[n])
+		vs = el2.CalcVShape(ip[n])
+		linalg.AddTransMult(-trans.Jacobian(ip[n])*w[n]*c, pgs, vs, 1., elmat)
 
 	return elmat 
 
@@ -131,8 +173,7 @@ def Assemble(space, integrator, c, qorder):
 
 def FaceAssemble(space, integrator, c, qorder):
 	A = COOMatrix(space.Nu)
-	for f in range(len(space.mesh.iface)):
-		face = space.mesh.iface[f] 
+	for face in space.mesh.iface:
 		elmat = integrator(space.el, space.el, face, c, qorder)
 		dofs1 = space.dofs[face.ElNo1] 
 		dofs2 = space.dofs[face.ElNo2]
@@ -153,3 +194,41 @@ def BdrFaceAssemble(space, integrator, c, qorder):
 
 def FaceAssembleAll(space, integrator, c, qorder):
 	return FaceAssemble(space, integrator, c, qorder) + BdrFaceAssemble(space, integrator, c, qorder)
+
+def MixFaceAssemble(space1, space2, integrator, c, qorder):
+	A = COOMatrix(space1.Nu, space2.Nu)
+	for face in space1.mesh.iface:
+		elmat = integrator([space1.el, space1.el], [space2.el, space2.el], face, c, qorder)
+		dofs11 = space1.dofs[face.ElNo1]
+		dofs12 = space1.dofs[face.ElNo2] 
+		dofs21 = space2.dofs[face.ElNo1]
+		dofs22 = space2.dofs[face.ElNo2]
+		dofs1 = np.concatenate((dofs11, dofs12))
+		dofs2 = np.concatenate((dofs21, dofs22))
+		assert((len(dofs1), len(dofs2))==elmat.shape)
+		A[dofs1, dofs2] = elmat 
+
+	return A.Get()
+
+def BdrMixFaceAssemble(space1, space2, integrator, c, qorder):
+	A = COOMatrix(space1.Nu, space2.Nu)
+	for face in space1.mesh.bface:
+		elmat = integrator([space1.el, space1.el], [space2.el, space2.el], face, c, qorder)
+		dofs11 = space1.dofs[face.ElNo1]
+		dofs21 = space2.dofs[face.ElNo1]
+		A[dofs11, dofs21] = elmat 
+
+	return A.Get()
+
+def MixFaceAssembleAll(space1, space2, integrator, c, qorder):
+	return MixFaceAssemble(space1, space2, integrator, c, qorder) \
+		+ BdrMixFaceAssemble(space1, space2, integrator, c, qorder)
+
+def MixAssemble(space1, space2, integrator, c, qorder):
+	A = COOMatrix(space1.Nu, space2.Nu)
+	for e in range(space1.Ne):
+		trans = space1.mesh.trans[e]
+		elmat = integrator(space1.el, space2.el, trans, c, qorder)
+		A[space1.dofs[e], space2.dofs[e]] = elmat 
+
+	return A.Get()

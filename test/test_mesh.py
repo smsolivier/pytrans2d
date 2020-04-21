@@ -32,6 +32,11 @@ def test_facetrans():
 	assert(ft.Transform(0)==approx([1/3,1/6]))
 	assert(ft.Jacobian(0)==approx(1/6))
 	assert(ft.Normal(0)==approx([1,0]))
+	ip, w = quadrature.Get1D(1)
+	l = 0
+	for n in range(len(w)):
+		l += ft.Jacobian(ip[n])*w[n]
+	assert(l==approx(1/3))
 
 	ipt1 = mesh.iface[0].ipt1 
 	ipt2 = mesh.iface[0].ipt2 

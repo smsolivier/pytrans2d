@@ -150,7 +150,5 @@ class Sweeper(AbstractSweeper):
 							subF = self.I[a,v.index,f]
 							upw = fi.ElNo2 if orient else fi.ElNo1
 							rhs -= np.dot(subF, angle.GetDof(upw)) 
-				x = np.dot(self.LHS[a,v.index], rhs)
+				x = np.dot(self.LHSI[a,v.index], rhs)
 				angle.SetDof(v.index, x) 
-
-				

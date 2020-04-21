@@ -8,8 +8,9 @@ from ..ext import linalg
 from .basis import LagrangeBasis
 
 class AffineTrans:
-	def __init__(self, box):
+	def __init__(self, box, elno=-1):
 		self.box = box 
+		self.ElNo = elno 
 		self.hx = box[1,0] - box[0,0] 
 		self.hy = box[2,1] - box[1,1] 
 		self.h = np.array([self.hx/2, self.hy/2])
@@ -39,8 +40,9 @@ class AffineTrans:
 		return np.dot(self.finv, x - self.c)
 
 class LinearTrans:
-	def __init__(self, box):
+	def __init__(self, box, elno=-1):
 		self.box = box 
+		self.ElNo = elno
 		self.basis = LagrangeBasis(1)
 
 	def Transform(self, xi):
@@ -165,7 +167,7 @@ class RectMesh:
 		# build transformations 
 		self.trans = []
 		for e in range(self.Ne):
-			self.trans.append(AffineTrans(self.nodes[self.ele[e]]))
+			self.trans.append(AffineTrans(self.nodes[self.ele[e]], e))
 
 		# build graph
 		self.graph = igraph.Graph()

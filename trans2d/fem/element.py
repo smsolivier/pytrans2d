@@ -16,7 +16,7 @@ class Element:
 
 	def CalcVShape(self, xi):
 		s = self.CalcShape(xi)
-		N = np.zeros((2, self.Nn))
+		N = np.zeros((2, 2*self.Nn))
 		N[0,:self.Nn] = s 
 		N[1,self.Nn:] = s 
 		return N

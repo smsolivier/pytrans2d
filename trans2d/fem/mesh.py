@@ -293,8 +293,13 @@ class RectMesh:
 		if (cell!=None):
 			f.write('CELL_DATA {}\n'.format(self.Ne)) 
 			for key in cell:
-				f.write('SCALARS {} float\n'.format(key)) 
-				f.write('LOOKUP_TABLE default\n')
 				data = cell[key] 
-				for n in range(len(data)):
-					f.write('{}\n'.format(data[n])) 
+				if (len(data.shape)==1):
+					f.write('SCALARS {} float\n'.format(key)) 
+					f.write('LOOKUP_TABLE default\n')
+					for n in range(len(data)):
+						f.write('{}\n'.format(data[n])) 
+				else:
+					f.write('VECTORS {} float\n'.format(key))
+					for n in range(data.shape[0]):
+						f.write('{} {} 0\n'.format(data[n,0], data[n,1]))

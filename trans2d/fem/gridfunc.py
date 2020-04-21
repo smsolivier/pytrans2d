@@ -57,9 +57,14 @@ class GridFunction:
 		return np.sqrt(l2)
 
 	def ElementData(self):
-		data = np.zeros(self.space.Ne)
+		if (self.space.vdim==1):
+			data = np.zeros(self.space.Ne)
 
-		for e in range(self.space.Ne):
-			data[e] = self.Interpolate(e, [0,0])
+			for e in range(self.space.Ne):
+				data[e] = self.Interpolate(e, [0,0])
+		else:
+			data = np.zeros((self.space.Ne, 2))
+			for e in range(self.space.Ne):
+				data[e] = self.Interpolate(e, [0,0])
 
 		return data 

@@ -16,16 +16,21 @@ if (len(sys.argv)>3):
 	N = int(sys.argv[3])
 
 mesh = RectMesh(Ne, Ne)
-space = L2Space(mesh, LegendreBasis, p)
+space = L2Space(mesh, LagrangeBasis, p)
 quad = LevelSym(N)
 
-sigma_t = lambda x: 1 
-sigma_s = lambda x: .99 
+sigma_t = lambda x: 1
+sigma_s = lambda x: 0
 Q = lambda x, Omega: 0
-psi_in = lambda x, Omega: (Omega[1]>0)*(x[0]>=.4)*(x[0]<=.6)
+psi_in = lambda x, Omega: 1
+# sweep = Sweeper(space, quad, sigma_t, sigma_s, Q, psi_in, True)
 sweep = DirectSweeper(space, quad, sigma_t, sigma_s, Q, psi_in, True)
 sn = P1SA(sweep)
 psi = TVector(space, quad)
 phi = sn.SourceIteration(psi)
 
-mesh.WriteVTK('solution', cell={'phi':phi.ElementData()})
+# mesh.WriteVTK('solution', cell={'phi':phi.ElementData()})
+# mesh.WriteVTK('solution', cell={
+	# 'psi1':psi.gf[0].ElementData(), 'psi2':psi.gf[1].ElementData(),
+	# 'psi3':psi.gf[2].ElementData(), 'psi4':psi.gf[3].ElementData(), 
+	# 'phi':phi.ElementData()})

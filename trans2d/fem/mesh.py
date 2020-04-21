@@ -187,6 +187,7 @@ class RectMesh:
 		# loop over edges to build interior face transformations 
 		self.iface = [] 
 		ref_geom = np.array([[-1,-1], [1,-1], [1,1], [-1,1]])
+		self.iface2el = np.zeros((self.Ne, 4), dtype=int) - 1
 		for edge in self.graph.es:
 			s = edge.source 
 			t = edge.target 
@@ -206,8 +207,11 @@ class RectMesh:
 				[f1, f2], # face orientations 
 				edge.index # face number 
 				))
+			self.iface2el[s, f1] = edge.index
+			self.iface2el[t, f2] = edge.index 
 
 		self.bface = [] 
+		self.bface2el = np.zeros((self.Ne, 4), dtype=int) - 1 
 		bfn = 0 
 		for e in self.bel:
 			v = self.graph.vs(e)[0]
@@ -233,6 +237,7 @@ class RectMesh:
 						[f], 
 						bfn
 						))
+					self.bface2el[e, f] = bfn 
 					bfn += 1 
 
 	def GetOrientation(self, s, t):

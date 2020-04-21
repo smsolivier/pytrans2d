@@ -18,7 +18,7 @@ class TVector:
 		return self.gf[angle]
 
 	def SetAngle(self, angle, data):
-		self.gf[angle] = data
+		self.gf[angle].data = data
 
 	def GetDof(self, angle, e):
 		return self.gf[angle].GetDof(e)

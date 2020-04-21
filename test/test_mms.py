@@ -78,7 +78,7 @@ def dgdiffusion(Ne, p):
 	err = T.L2Error(lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*p+1)
 	return err
 
-def sn(Ne, p):
+def sn_direct(Ne, p):
 	mesh = RectMesh(Ne, Ne)
 	space = L2Space(mesh, LegendreBasis, p)
 	quad = LevelSym(4)
@@ -86,6 +86,20 @@ def sn(Ne, p):
 	sigma_s = lambda x: .1 
 	psi_ex, phi_ex, Q = TransportMMS(1, 1, 1, 10, 0, sigma_t, sigma_s)
 	sweep = DirectSweeper(space, quad, sigma_t, sigma_s, Q, psi_ex, False)
+	sn = Sn(sweep)
+	psi = TVector(space, quad)
+	phi = sn.SourceIteration(psi)
+
+	return phi.L2Error(phi_ex, 2*p+1)
+
+def sn_sweep(Ne, p):
+	mesh = RectMesh(Ne, Ne)
+	space = L2Space(mesh, LegendreBasis, p)
+	quad = LevelSym(4)
+	sigma_t = lambda x: 1
+	sigma_s = lambda x: .1 
+	psi_ex, phi_ex, Q = TransportMMS(1, 1, 1, 10, 0, sigma_t, sigma_s)
+	sweep = Sweeper(space, quad, sigma_t, sigma_s, Q, psi_ex, False)
 	sn = Sn(sweep)
 	psi = TVector(space, quad)
 	phi = sn.SourceIteration(psi)
@@ -109,7 +123,7 @@ def p1sa(Ne, p):
 
 Ne = 5
 @pytest.mark.parametrize('p', [1, 2, 3, 4])
-@pytest.mark.parametrize('solver', [h1diffusion, convection, dgdiffusion, sn, p1sa])
+@pytest.mark.parametrize('solver', [h1diffusion, convection, dgdiffusion, sn_direct, sn_sweep, p1sa])
 def test_ooa(solver, p):
 	E1 = solver(Ne, p)
 	E2 = solver(2*Ne, p)

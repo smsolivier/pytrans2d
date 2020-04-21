@@ -35,3 +35,21 @@ def test_interpolate(btype, p):
 	X = trans.Transform(xi)
 	assert(el.Interpolate(xi, u)==approx(f(X)))
 	assert(el.InterpolateGradient(trans, xi, u)==approx(df(X)))
+
+@pytest.mark.parametrize('p', [1, 2, 3, 4])
+@pytest.mark.parametrize('btype', [LagrangeBasis, LobattoBasis, LegendreBasis])
+def test_vinterpolate(btype, p):
+	el = Element(btype, p)
+	trans = AffineTrans(np.array([[0,0], [1,0], [1,1], [0,1]]))
+	f = lambda x: [10*x[0] + x[1], 2*x[0] - x[1]]
+
+	u = np.zeros(2*el.Nn)
+	for i in range(el.Nn):
+		X = trans.Transform(el.nodes[i])
+		evl = f(X)
+		u[i] = evl[0]
+		u[i+el.Nn] = evl[1] 
+
+	xi = [.25, .35] 
+	X = trans.Transform(xi)
+	assert(el.Interpolate(xi, u)==approx(np.array(f(X))))

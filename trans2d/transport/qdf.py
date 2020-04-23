@@ -1,4 +1,5 @@
 import numpy as np 
+import warnings 
 
 from .. import fem 
 
@@ -30,6 +31,9 @@ class QDFactors:
 				for j in range(2):
 					self.P[i*2+j].data += w*Omega[i]*Omega[j]*angle.data 
 			self.phi.data += w*angle.data 
+
+			if (angle.data.any()<0):
+				warnings.warn('negative psi detected', RuntimeWarning)
 
 	def EvalTensor(self, trans, xi):
 		E = np.zeros((2,2))

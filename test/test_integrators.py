@@ -11,7 +11,7 @@ el = Element(LagrangeBasis, 1)
 el0 = Element(LegendreBasis, 0)
 
 def test_diffusion():
-	K = DiffusionIntegrator(el, trans, lambda x: 1, 0)
+	K = DiffusionIntegrator(el, trans, lambda x: 1, 2)
 	Kex = np.array([[2/3, -1/6, -1/6, -1/3],
 		[-1/6, 2/3, -1/3, -1/6], 
 		[-1/6, -1/3, 2/3, -1/6], 

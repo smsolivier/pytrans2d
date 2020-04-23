@@ -1,5 +1,6 @@
 import numpy as np 
 import math
+import warnings
 
 class Quadrature:
 	def __init__(self, pmax):
@@ -27,7 +28,7 @@ class Quadrature:
 	def Get(self, p):
 		order = math.ceil((p+1)/2)
 		assert(order<self.pmax)
-		return self.ip_leg2d[order], self.w_leg2d[order]
+		return self.ip_leg2d[order-1], self.w_leg2d[order-1]
 
 	def Get1D(self, p):
 		order = math.ceil((p+1)/2)

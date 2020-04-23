@@ -53,7 +53,7 @@ def test_bdrface():
 def test_lintrans():
 	trans = LinearTrans(np.array([[0,0], [1,0], [-.25,1], [1.25,1]]))
 	area = 0 
-	ip, w = quadrature.Get(1)
+	ip, w = quadrature.Get(2)
 	for n in range(len(w)):
 		area += trans.Jacobian(ip[n]) 
 	assert(area==approx(5/4))

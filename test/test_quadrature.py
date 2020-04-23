@@ -13,7 +13,7 @@ def Integrate(f, ip, w):
 
 	return s	
 
-@pytest.mark.parametrize('p', [1,2,3,4,5])
+@pytest.mark.parametrize('p', np.arange(1,11).tolist())
 def test_1D(p):
 	c = np.random.rand(p+1)
 	cint = np.polynomial.polynomial.polyint(c)
@@ -23,9 +23,16 @@ def test_1D(p):
 
 	assert(Integrate(f,ip,w)==pytest.approx(ex))
 
-@pytest.mark.parametrize('p', [1,2,3,4,5])
+@pytest.mark.parametrize('p', np.arange(1,11).tolist())
 def test_2D(p):
-	f = lambda x: 1 + x[0] + 2*x[1] + x[0]*x[1] 
+	cx = np.random.rand(p+1)
+	cy = np.random.rand(p+1)
+	cxint = np.polynomial.polynomial.polyint(cx)
+	cyint = np.polynomial.polynomial.polyint(cy)
+	ex_x = np.polyval(cxint[::-1], 1) - np.polyval(cxint[::-1], -1)
+	ex_y = np.polyval(cyint[::-1], 1) - np.polyval(cyint[::-1], -1)
+	ex = ex_x * ex_y 
+	f = lambda x: np.polyval(cx[::-1], x[0])*np.polyval(cy[::-1], x[1])
 	ip, w = quadrature.Get(p)
 
-	assert(Integrate(f,ip,w)==pytest.approx(4))	
+	assert(Integrate(f,ip,w)==pytest.approx(ex))	

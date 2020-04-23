@@ -41,7 +41,9 @@ class AffineTrans:
 
 class LinearTrans:
 	def __init__(self, box, elno=-1):
-		self.box = box 
+		self.box = box
+		# convert to node ordering expected by LagrangeBasis
+		self.box[[2,3]] = self.box[[3,2]] 
 		self.ElNo = elno
 		self.basis = LagrangeBasis(1)
 

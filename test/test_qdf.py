@@ -71,3 +71,8 @@ def test_weakedddiv():
 	G = WeakEddDivIntegrator(el1, el2, trans, qdf, 3)
 	D = MixDivIntegrator(el2, el1, trans, 1, 3)
 	assert(G==pytest.approx(-1/3*D.transpose()))
+
+def test_negative():
+	psi.Project(lambda x, Omega: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]))
+	with pytest.warns(RuntimeWarning):
+		qdf.Compute(psi) 

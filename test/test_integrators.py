@@ -27,7 +27,7 @@ def test_mass():
 	assert(M==pytest.approx(Mex))
 
 def test_mass_on_quad():
-	trans = LinearTrans(np.array([[0,0], [1,0], [-.25,1], [1.25,1]]))
+	trans = LinearTrans(np.array([[0,0], [1,0], [1.25,1], [-.25,1]]))
 	M = MassIntegrator(el, trans, lambda x: 1, 3)
 	Mex = np.array([[1/8, 1/16, 5/72, 5/144], 
 		[1/16, 1/8, 5/144, 5/72], 

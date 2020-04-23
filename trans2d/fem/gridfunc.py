@@ -45,6 +45,11 @@ class GridFunction:
 
 		return np.sqrt(l2) 
 
+	def L2ProjError(self, ex, qorder):
+		gf = GridFunction(self.space)
+		gf.Project(ex)
+		return self.L2Diff(gf, qorder)
+
 	def L2Diff(self, gf, qorder):
 		ip, w = quadrature.Get(qorder)
 		l2 = 0 

@@ -50,6 +50,15 @@ class DirectSweeper(AbstractSweeper):
 			angle = self.lu[a].solve(self.RHS[a] + scat.data)
 			psi.SetAngle(a, angle)
 
+	def ComputeResidual(self, psi, phi):
+		res = 0 
+		scat = self.FormScattering(phi)
+		for a in range(self.quad.N):
+			res_angle = self.LHS[a]*psi.GetAngle(a).data - scat.data - self.RHS[a]
+			res += np.dot(res_angle, res_angle)
+
+		return np.sqrt(res)
+
 class Sweeper(AbstractSweeper):
 	def __init__(self, space, quad, sigma_t, sigma_s, Q, psi_in, LOUD=True):
 		AbstractSweeper.__init__(self, space, quad, sigma_t, sigma_s, Q, psi_in, LOUD) 
@@ -152,3 +161,34 @@ class Sweeper(AbstractSweeper):
 							rhs -= np.dot(subF, angle.GetDof(upw)) 
 				x = np.dot(self.LHSI[a,v.index], rhs)
 				angle.SetDof(v.index, x) 
+
+	def ComputeResidual(self, psi, phi):
+		scat = self.FormScattering(phi)
+		mesh = self.space.mesh
+		el = self.space.el 
+		p = self.p
+		res = 0
+		for a in range(self.quad.N):
+			Omega = self.quad.Omega[a]
+			angle = psi.GetAngle(a)
+			for v in self.graphs[a].bfsiter(int(self.start[a])):
+				lhs = self.LHS[a,v.index]
+				rhs = self.RHS[a,v.index] + scat.GetDof(v.index)
+				for f in range(4):
+					iidx = mesh.iface2el[v.index,f] 
+					bidx = mesh.bface2el[v.index,f] 
+
+					if (iidx>=0):
+						fi = mesh.iface[iidx]
+						orient = True if fi.ElNo1==v.index else False 
+						sgn = 1 if orient else -1
+						nor = fi.face.Normal(0) * sgn 
+						dot = np.dot(Omega, nor) 
+						if (dot<0):
+							subF = self.I[a,v.index,f]
+							upw = fi.ElNo2 if orient else fi.ElNo1
+							rhs -= np.dot(subF, angle.GetDof(upw)) 
+				diff = np.dot(lhs, angle.GetDof(v.index)) - rhs 
+				res += np.dot(diff, diff)
+
+		return np.sqrt(res)

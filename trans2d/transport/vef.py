@@ -72,8 +72,8 @@ class AbstractVEF(sn.Sn):
 		for a in range(self.quad.N):
 			Omega = self.quad.Omega[a] 
 			w = self.quad.w[a] 
-			self.Q0 += fem.AssembleRHS(phi_space, fem.DomainIntegrator, lambda x: sweeper.Q(x,Omega), 2*p+1) * w
-			self.Q1 += fem.AssembleRHS(J_space, fem.VectorDomainIntegrator, lambda x: sweeper.Q(x,Omega)*Omega, 2*p+1) * w 
+			self.Q0 += fem.AssembleRHS(phi_space, fem.DomainIntegrator, lambda x: sweeper.Q(x,Omega), 2*p+2) * w
+			self.Q1 += fem.AssembleRHS(J_space, fem.VectorDomainIntegrator, lambda x: sweeper.Q(x,Omega)*Omega, 2*p+2) * w 
 
 		self.qdf = qdf.QDFactors(self.space, self.quad, sweeper.psi_in) 
 
@@ -109,7 +109,7 @@ class VEF(AbstractVEF):
 		qin = fem.FaceAssembleRHS(self.J_space, VEFInflowIntegrator, self.qdf, 2*self.p+1)
 
 		A = sp.bmat([[self.Mt+B, G], [self.D, self.Ma]])
-		rhs = np.concatenate((self.Q1 + qin, self.Q0))
+		rhs = np.concatenate((self.Q1+qin, self.Q0))
 
 		x = spla.spsolve(A.tocsc(), rhs) 
 		phi = fem.GridFunction(self.phi_space)

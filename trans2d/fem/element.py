@@ -17,10 +17,7 @@ class Element:
 
 	def CalcVShape(self, xi):
 		s = self.CalcShape(xi)
-		N = np.zeros((2, 2*self.Nn))
-		N[0,:self.Nn] = s 
-		N[1,self.Nn:] = s 
-		return N
+		return np.block([[s, np.zeros(s.shape)], [np.zeros(s.shape), s]])
 
 	def CalcGradShape(self, xi):
 		gshape = np.zeros((2,self.Nn))
@@ -34,17 +31,11 @@ class Element:
 
 	def CalcVGradShape(self, xi):
 		gs = self.CalcGradShape(xi)
-		vgs = np.zeros((4, 2*self.Nn))
-		vgs[0:2,:self.Nn] = gs 
-		vgs[2:4,self.Nn:] = gs 
-		return vgs 
+		return np.block([[gs, np.zeros(gs.shape)], [np.zeros(gs.shape), gs]])
 
 	def CalcVPhysGradShape(self, trans, xi):
 		pgs = self.CalcPhysGradShape(trans, xi)
-		vpgs = np.zeros((4, 2*self.Nn))
-		vpgs[0:2,:self.Nn] = pgs 
-		vpgs[2:4,self.Nn:] = pgs 
-		return vpgs 
+		return np.block([[pgs, np.zeros(pgs.shape)], [np.zeros(pgs.shape), pgs]])
 
 	def Interpolate(self, xi, u):
 		if (len(u)==self.Nn):

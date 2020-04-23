@@ -7,6 +7,7 @@ import warnings
 from . import sn 
 from .. import fem 
 from ..ext import linalg 
+from .. import utils 
 
 def JumpJumpIntegrator(el1, el2, face, c, qorder):
 	elmat = np.zeros((2*el1.Nn, 2*el2.Nn))
@@ -163,6 +164,6 @@ class P1SA(sn.Sn):
 				break 
 
 		if (norm > tol):
-			warnings.warn('source iteration not converged. final tol = {:.3e}'.format(norm), stacklevel=2)
+			warnings.warn('source iteration not converged. final tol = {:.3e}'.format(norm), utils.ToleranceWarning)
 
 		return phi		

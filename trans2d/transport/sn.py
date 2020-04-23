@@ -2,6 +2,7 @@ import time
 import warnings 
 
 from .. import fem 
+from .. import utils 
 
 class Sn:
 	def __init__(self, sweep):
@@ -35,6 +36,6 @@ class Sn:
 				break 
 
 		if (norm > tol):
-			warnings.warn('source iteration not converged. final tol = {:.3e}'.format(norm), stacklevel=2)
+			warnings.warn('source iteration not converged. final tol = {:.3e}'.format(norm), utils.ToleranceWarning)
 
 		return phi

@@ -2,11 +2,13 @@ import numpy as np
 import scipy.sparse as sp 
 import scipy.sparse.linalg as spla 
 import time 
+import warnings 
 
 from .. import fem 
 from ..ext import linalg 
 from . import sn 
 from . import qdf 
+from .. import utils 
 
 def WeakEddDivIntegrator(el1, el2, trans, qdf, qorder):
 	elmat = np.zeros((el1.Nn*2, el2.Nn))
@@ -94,7 +96,7 @@ class AbstractVEF(sn.Sn):
 				break 
 
 		if (norm > tol):
-			warnings.warn('source iteration not converged. final tol = {:.3e}'.format(norm), stacklevel=2)
+			warnings.warn('source iteration not converged. final tol = {:.3e}'.format(norm), utils.ToleranceWarning)
 
 		return phi		
 

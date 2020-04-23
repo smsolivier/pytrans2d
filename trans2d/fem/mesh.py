@@ -3,9 +3,11 @@
 import numpy as np
 import warnings
 import igraph 
+
 from ..ext.horner import PolyVal2D
 from ..ext import linalg 
 from .basis import LagrangeBasis
+from .. import utils
 
 class AffineTrans:
 	def __init__(self, box, elno=-1):
@@ -78,7 +80,7 @@ class LinearTrans:
 				break 
 
 		if (norm>tol):
-			warnings.warn('inverse map not converged. final tol = {:.3e}'.format(norm), stacklevel=2)
+			warnings.warn('inverse map not converged. final tol = {:.3e}'.format(norm), utils.ToleranceWarning)
 
 		return xi 
 

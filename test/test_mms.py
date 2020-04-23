@@ -177,7 +177,7 @@ def p1sa(Ne, p):
 	sweep = Sweeper(space, quad, sigma_t, sigma_s, Q, psi_ex, False)
 	sn = P1SA(sweep)
 	psi = TVector(space, quad)
-	phi = sn.SourceIteration(psi, tol=1e-11)
+	phi = sn.SourceIteration(psi)
 	res = sweep.ComputeResidual(psi, phi) 
 	if (res>1e-10):
 		warnings.warn('sweep residual = {:.3e}'.format(res), stacklevel=2)
@@ -198,11 +198,13 @@ def vef(Ne, p):
 	sn = VEF(phi_space, Jspace, sweep)
 	psi = TVector(space, quad)
 	psi.Project(psi_ex)
-	phi, J = sn.Mult(psi)
+	with warnings.catch_warnings():
+		warnings.filterwarnings('ignore', category=NegativityWarning)
+		phi, J = sn.Mult(psi)
 
 	return phi.L2Error(phi_ex, 2*p+2)	
 
-Ne = 5
+Ne = 3
 @pytest.mark.parametrize('p', [1, 2, 3, 4])
 @pytest.mark.parametrize('solver', [h1diffusion, mixdiffusion, convection, dgdiffusion, 
 	sn_direct, sn_sweep, p1, p1sa, vef])

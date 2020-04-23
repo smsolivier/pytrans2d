@@ -2,6 +2,7 @@ import numpy as np
 import warnings 
 
 from .. import fem 
+from .. import utils 
 
 class QDFactors:
 	def __init__(self, space, quad, psi_in=None):
@@ -33,7 +34,7 @@ class QDFactors:
 			self.phi.data += w*angle.data 
 
 			if (angle.data<0).any():
-				warnings.warn('negative psi detected', RuntimeWarning, stacklevel=2)
+				warnings.warn('negative psi detected', utils.NegativityWarning)
 
 	def EvalTensor(self, trans, xi):
 		E = np.zeros((2,2))

@@ -36,6 +36,10 @@ class QDFactors:
 			if (angle.data<0).any():
 				warnings.warn('negative psi detected', utils.NegativityWarning)
 
+		# warnings will output once per call
+		# reset so that next call to Compute will warn once 
+		# warnings.resetwarnings() 
+
 	def EvalTensor(self, trans, xi):
 		E = np.zeros((2,2))
 		for i in range(2):

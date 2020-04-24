@@ -74,5 +74,6 @@ def test_weakedddiv():
 
 def test_negative():
 	psi.Project(lambda x, Omega: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]))
-	with pytest.warns(NegativityWarning):
-		qdf.Compute(psi) 
+	for i in range(3):
+		with pytest.warns(NegativityWarning):
+			qdf.Compute(psi) 

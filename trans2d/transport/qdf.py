@@ -4,6 +4,8 @@ import warnings
 from .. import fem 
 from .. import utils 
 
+warnings.simplefilter('always', category=utils.NegativityWarning)
+
 class QDFactors:
 	def __init__(self, space, quad, psi_in=None):
 		self.space = space 

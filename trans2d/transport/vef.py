@@ -105,7 +105,9 @@ class AbstractVEF(sn.Sn):
 		self.linit = [] 
 
 	def SourceIteration(self, psi, niter=50, tol=1e-10):
+		phi0 = self.ComputeScalarFlux(psi)
 		phi = fem.GridFunction(self.phi_space)
+		phi.ProjectGF(phi0)
 		phi_old = fem.GridFunction(self.phi_space)
 		for n in range(niter):
 			start = time.time()

@@ -29,6 +29,14 @@ class GridFunction:
 
 			self.SetDof(e, vals)
 
+	def ProjectGF(self, gf):
+		for e in range(self.space.Ne):
+			vals = np.zeros(self.space.el.Nn)
+			for i in range(self.space.el.Nn):
+				vals[i] = gf.Interpolate(e, self.space.el.nodes[i])
+
+			self.SetDof(e, vals) 			
+
 	def L2Error(self, ex, qorder):
 		ip, w = quadrature.Get(qorder)
 		l2 = 0 

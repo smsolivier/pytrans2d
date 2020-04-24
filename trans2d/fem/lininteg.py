@@ -26,6 +26,18 @@ def VectorDomainIntegrator(el, trans, c, qorder):
 
 	return elvec 
 
+def GradDomainIntegrator(el, trans, c, qorder):
+	elvec = np.zeros(el.Nn)
+	ip, w = quadrature.Get(qorder)
+
+	for n in range(len(w)):
+		pgs = el.CalcPhysGradShape(trans, ip[n])
+		X = trans.Transform(ip[n])
+		c_ev = c(X) 
+		elvec += np.dot(pgs.transpose(), c_ev) * w[n] * trans.Jacobian(ip[n]) 
+
+	return elvec 
+
 def InflowIntegrator(el, face, c, qorder):
 	elvec = np.zeros(el.Nn)
 	ip, w = quadrature.Get1D(qorder)

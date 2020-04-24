@@ -29,6 +29,20 @@ class COOMatrix:
 	def Get(self):
 		return sp.coo_matrix((self.data, (self.row, self.col)), (self.m, self.n)).tocsc()
 
+class BlockMatrix:
+	def __init__(self, lst):
+		self.lst = lst 
+
+	def __iadd__(self, other):
+		for i in range(len(self.lst)):
+			for j in range(len(self.lst[i])):
+				self.lst[i][j] += other.lst[i][j] 
+
+		return self
+
+	def __getitem__(self, key):
+		return self.lst[key[1]][key[0]]
+
 def DiffusionIntegrator(el, trans, c, qorder):
 	elmat = np.zeros((el.Nn, el.Nn))
 	ip, w = quadrature.Get(qorder)
@@ -182,6 +196,24 @@ def Assemble(space, integrator, c, qorder):
 
 	return A.Get()
 
+def AssembleBlocks(space, integrator, c, qorder):
+	nu = int(space.Nu/2)
+	A = COOMatrix(nu)
+	B = COOMatrix(nu)
+	C = COOMatrix(nu)
+	D = COOMatrix(nu) 
+	for e in range(space.Ne):
+		trans = space.mesh.trans[e]
+		elmat = integrator(space.el, trans, c, qorder)
+		half = int(elmat.shape[0]/2)
+		dofs = space.dofs[e][:half]
+		A[dofs,dofs] = elmat[:half, :half]
+		B[dofs,dofs] = elmat[:half, half:]
+		C[dofs,dofs] = elmat[half:, :half]
+		D[dofs,dofs] = elmat[half:, half:]
+
+	return BlockMatrix([[A.Get(), B.Get()], [C.Get(), D.Get()]])
+
 def FaceAssemble(space, integrator, c, qorder):
 	A = COOMatrix(space.Nu)
 	for face in space.mesh.iface:
@@ -202,6 +234,23 @@ def BdrFaceAssemble(space, integrator, c, qorder):
 		A[dofs, dofs] = elmat 
 
 	return A.Get()
+
+def BdrFaceAssembleBlocks(space, integrator, c, qorder):
+	nu = int(space.Nu/2)
+	A = COOMatrix(nu)
+	B = COOMatrix(nu)
+	C = COOMatrix(nu)
+	D = COOMatrix(nu) 
+	for face in space.mesh.bface:
+		elmat = integrator(space.el, space.el, face, c, qorder)
+		half = int(elmat.shape[0]/2)
+		dofs = space.dofs[face.ElNo1][:half]
+		A[dofs,dofs] = elmat[:half, :half]
+		B[dofs,dofs] = elmat[:half, half:]
+		C[dofs,dofs] = elmat[half:, :half]
+		D[dofs,dofs] = elmat[half:, half:]
+
+	return BlockMatrix([[A.Get(), B.Get()], [C.Get(), D.Get()]])
 
 def FaceAssembleAll(space, integrator, c, qorder):
 	return FaceAssemble(space, integrator, c, qorder) + BdrFaceAssemble(space, integrator, c, qorder)

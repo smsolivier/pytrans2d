@@ -29,6 +29,12 @@ class AffineTrans:
 	def Jacobian(self, xi):
 		return self.j
 
+	def Area(self):
+		return 4*self.j 
+
+	def Length(self):
+		return 2*np.sqrt(self.j) 
+
 	def F(self, xi):
 		return self.f 
 
@@ -287,7 +293,7 @@ class RectMesh:
 		if (point!=None):
 			f.write('POINT_DATA {}\n'.format(4*self.Ne))
 			for key in point:
-				data = point[key] 
+				data = point[key].flatten()
 				if (len(data)==4*self.Ne): # scalar data 
 					f.write('SCALARS {} float\n'.format(key))
 					f.write('LOOKUP_TABLE default\n')

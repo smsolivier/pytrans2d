@@ -53,7 +53,7 @@ class BlockLDU(IterativeSolver):
 		x, info = spla.gmres(M, rhs, M=p2x2, tol=0, atol=self.itol,
 			maxiter=self.maxiter, callback=self.Callback, callback_type='legacy', restart=None)
 
-		if (info>0):
+		if (info>0 or self.it==self.maxiter):
 			warnings.warn('gmres not converged. final tol = {:.3e}'.format(self.norm), utils.ToleranceWarning)
 		if (info<0):
 			raise AttributeError('gmres exited with info = {}'.format(info))
@@ -155,7 +155,7 @@ class BlockTri(IterativeSolver):
 		p = spla.LinearOperator(M.shape, Prec)
 		x, info = spla.gmres(M, rhs, M=p, tol=self.itol, maxiter=self.maxiter, callback=self.Callback)
 
-		if (info>0):
+		if (info>0 or self.it==self.maxiter):
 			warnings.warn('gmres not converged. final tol = {:.3e}'.format(self.norm), utils.ToleranceWarning)
 		if (info<0):
 			raise AttributeError('gmres exited with info = {}'.format(info))
@@ -181,7 +181,7 @@ class BlockDiag(IterativeSolver):
 		p = spla.LinearOperator(M.shape, Prec)
 		x, info = spla.gmres(M, rhs, M=p, tol=self.itol, maxiter=self.maxiter, callback=self.Callback)
 
-		if (info>0):
+		if (info>0 or self.it==self.maxiter):
 			warnings.warn('gmres not converged. final tol = {:.3e}'.format(self.norm), utils.ToleranceWarning)
 		if (info<0):
 			raise AttributeError('gmres exited with info = {}'.format(info))
@@ -201,7 +201,7 @@ class AMGSolver(IterativeSolver):
 		x, info = spla.gmres(A.tocsc(), b, M=amg.aspreconditioner(cycle='V'), callback=self.Callback, 
 			callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)
 
-		if (info>0):
+		if (info>0 or self.it==self.maxiter):
 			warnings.warn('gmres not converged. final tol = {:.3e}'.format(self.norm), utils.ToleranceWarning)
 		if (info<0):
 			raise AttributeError('gmres exited with info = {}'.format(info))

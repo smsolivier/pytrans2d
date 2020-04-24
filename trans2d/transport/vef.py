@@ -102,6 +102,7 @@ class AbstractVEF(sn.Sn):
 			self.Q1 += fem.AssembleRHS(J_space, fem.VectorDomainIntegrator, lambda x: sweeper.Q(x,Omega)*Omega, 2*p+2) * w 
 
 		self.qdf = qdf.QDFactors(self.space, self.quad, sweeper.psi_in) 
+		self.linit = [] 
 
 	def SourceIteration(self, psi, niter=50, tol=1e-10):
 		phi = fem.GridFunction(self.phi_space)
@@ -112,12 +113,23 @@ class AbstractVEF(sn.Sn):
 			self.sweep.Sweep(psi, phi) 
 			phi, J = self.Mult(psi)
 			norm = phi.L2Diff(phi_old, 2*self.p+1)
+			if (self.lin_solver!=None):
+				self.linit.append(self.lin_solver.it)
 			if (self.LOUD):
 				el = time.time() - start 
-				print('i={:3}, norm={:.3e}, {:.2f} s/iter'.format(n+1, norm, el))
+				if (self.lin_solver!=None):
+					print('i={:3}, norm={:.3e}, {:.2f} s/iter, {} linear iters'.format(
+						n+1, norm, el, self.lin_solver.it))
+				else:
+					print('i={:3}, norm={:.3e}, {:.2f} s/iter'.format(
+						n+1, norm, el))
 
 			if (norm < tol):
 				break 
+
+		if (self.LOUD and self.lin_solver!=None):
+			self.avg_linit = np.mean(self.linit) 
+			print('avg linear iters = {:.2f}'.format(self.avg_linit))
 
 		if (norm > tol):
 			warnings.warn('source iteration not converged. final tol = {:.3e}'.format(norm), utils.ToleranceWarning)

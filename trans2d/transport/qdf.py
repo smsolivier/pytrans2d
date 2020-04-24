@@ -24,6 +24,7 @@ class QDFactors:
 			self.P[i].data *= 0 
 		self.phi.data *= 0 
 
+		neg = False
 		for a in range(self.quad.N):
 			Omega = self.quad.Omega[a]
 			w = self.quad.w[a] 
@@ -34,11 +35,10 @@ class QDFactors:
 			self.phi.data += w*angle.data 
 
 			if (angle.data<0).any():
-				warnings.warn('negative psi detected', utils.NegativityWarning)
+				neg = True
 
-		# warnings will output once per call
-		# reset so that next call to Compute will warn once 
-		# warnings.resetwarnings() 
+		if (neg):
+			warnings.warn('negative psi detected', utils.NegativityWarning)
 
 	def EvalTensor(self, trans, xi):
 		E = np.zeros((2,2))

@@ -73,3 +73,19 @@ class GridFunction:
 				data[e] = self.Interpolate(e, [0,0])
 
 		return data 
+
+	def NodeData(self):
+		ref_geom = np.array([[-1,-1], [1,-1], [1,1], [-1,1]])
+		if (self.space.vdim==1):
+			data = np.zeros((self.space.Ne, 4))
+			for e in range(self.space.Ne):
+				for n in range(4):
+					data[e,n] = self.Interpolate(e, ref_geom[n])
+
+		else:
+			data = np.zeros((self.space.Ne, 4, 2))
+			for e in range(self.space.Ne):
+				for n in range(4):
+					data[e,n] = self.Interpolate(e, ref_geom[n])
+
+		return data 			

@@ -39,6 +39,29 @@ def MLBdrIntegrator(el1, el2, fi, qdf, qorder):
 
 	return elmat
 
+def MLBdrIntegratorRowSum(el1, el2, fi, qdf, qorder):
+	M = MLBdrIntegrator(el1, el2, fi, qdf, qorder)
+	for d in range(2):
+		for e in range(2):
+			for i in range(el1.Nn):
+				tmp = 0 
+				for j in range(el1.Nn):
+					tmp += M[d*el1.Nn + i, e*el1.Nn + j] 
+					M[d*el1.Nn + i, e*el1.Nn + j] = 0 
+				M[d*el1.Nn+i, e*el1.Nn+i] = tmp 
+
+	return M 
+
+def MLBdrIntegratorFullRowSum(el1, el2, fi, qdf, qorder):
+	M = MLBdrIntegrator(el1, el2, fi, qdf, qorder)
+	for i in range(M.shape[0]):
+		tmp = 0
+		for j in range(M.shape[1]):
+			tmp += M[i,j]
+			M[i,j] = 0 
+		M[i,i] = tmp 
+	return M 
+
 def VEFInflowIntegrator(el, fi, qdf, qorder):
 	elvec = np.zeros(2*el.Nn)
 	ip, w = fem.quadrature.Get1D(qorder)
@@ -66,6 +89,7 @@ class AbstractVEF(sn.Sn):
 		self.sigma_a = lambda x: sweeper.sigma_t(x) - sweeper.sigma_s(x)
 
 		self.Mt = fem.Assemble(self.J_space, fem.VectorMassIntegrator, sweeper.sigma_t, 2*p+1)
+		self.Mtl = fem.Assemble(self.J_space, fem.VectorMassIntegratorRowSum, sweeper.sigma_t, 2*p+1)
 		self.Ma = fem.Assemble(self.phi_space, fem.MassIntegrator, self.sigma_a, 2*p+1)
 		self.D = fem.MixAssemble(self.phi_space, self.J_space, fem.MixDivIntegrator, 1, 2*p+1)
 
@@ -103,6 +127,7 @@ class AbstractVEF(sn.Sn):
 class VEF(AbstractVEF):
 	def __init__(self, phi_space, J_space, sweeper, lin_solver=None):
 		AbstractVEF.__init__(self, phi_space, J_space, sweeper, lin_solver)
+		self.full_lump = False
 
 	def Mult(self, psi):
 		self.qdf.Compute(psi)
@@ -110,10 +135,31 @@ class VEF(AbstractVEF):
 		B = fem.BdrFaceAssemble(self.J_space, MLBdrIntegrator, self.qdf, 2*self.p+1)
 		qin = fem.FaceAssembleRHS(self.J_space, VEFInflowIntegrator, self.qdf, 2*self.p+1)
 
-		A = sp.bmat([[self.Mt+B, G], [self.D, self.Ma]])
+		A = self.Mt + B
 		rhs = np.concatenate((self.Q1+qin, self.Q0))
 
-		x = spla.spsolve(A.tocsc(), rhs) 
+		if (self.lin_solver==None):
+			M = sp.bmat([[A, G], [self.D, self.Ma]])
+			x = spla.spsolve(M.tocsc(), rhs) 
+		else:
+			Al = fem.AssembleBlocks(self.J_space, fem.VectorMassIntegratorRowSum, self.sweep.sigma_t, 2*self.p+1)
+			Bl = fem.BdrFaceAssembleBlocks(self.J_space, 
+				MLBdrIntegratorFullRowSum if self.full_lump else MLBdrIntegratorRowSum, self.qdf, 2*self.p+1)
+			Al += Bl 
+			a = Al[0,0].diagonal()
+			b = Al[0,1].diagonal()
+			c = Al[1,0].diagonal()
+			d = Al[1,1].diagonal()
+			w = 1/(a - b/d*c)
+			x = -1/a*b*w
+			z = 1/(d - c/a*b)
+			y = -1/d*c*z 
+			Alinv = sp.bmat([[sp.diags(w), sp.diags(x)], [sp.diags(y), sp.diags(z)]])
+			# Al = self.Mtl + fem.BdrFaceAssemble(self.J_space, 
+			# 	MLBdrIntegratorFullRowSum if self.full_lump else MLBdrIntegratorRowSum, self.qdf, 2*self.p+1)
+			# Alinv = spla.inv(Al)
+			x = self.lin_solver.Solve(A, Alinv, G, self.D, self.Ma, rhs) 
+
 		phi = fem.GridFunction(self.phi_space)
 		J = fem.GridFunction(self.J_space)
 		phi.data = x[self.J_space.Nu:]

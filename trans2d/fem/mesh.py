@@ -150,6 +150,7 @@ class AbstractMesh:
 	def __init__(self, nodes, ele, order=0):
 		self.nodes = nodes 
 		self.ele = ele 
+		self.order = order 
 		self.Nn = nodes.shape[0] 
 		self.Ne = ele.shape[0] 
 
@@ -320,6 +321,7 @@ class AbstractMesh:
 
 class RectMesh(AbstractMesh): 
 	def __init__(self, Nx, Ny, xb=[1,1]):
+		self.order = 0
 		x1d = np.linspace(0, xb[0], Nx+1)
 		y1d = np.linspace(0, xb[1], Ny+1)
 

@@ -7,6 +7,7 @@ class FESpace:
 	def __init__(self, mesh, btype, p, vdim=1):
 		self.mesh = mesh 
 		self.p = p
+		self.btype = btype 
 		self.el = element.Element(btype, p)
 		self.vdim = vdim 
 		self.Ne = mesh.Ne 
@@ -57,6 +58,29 @@ class H1Space(FESpace):
 			self.bnodes += self.dofs[f.ElNo1, n_on_face[f.f1]].tolist()
 
 		self.bnodes = np.unique(self.bnodes)
+
+	def LORefine(self):
+		nodes = np.zeros((self.Nu, 2))
+		for e in range(self.Ne):
+			trans = self.mesh.trans[e] 
+			for n in range(self.el.nodes.shape[0]):
+				nodes[self.dofs[e,n]] = trans.Transform(self.el.nodes[n])
+
+		p = self.el.basis.p 
+		ele = np.zeros((self.Ne*p**2, 4), dtype=int) 
+		te = 0 
+		for e in range(self.Ne):
+			for i in range(p):
+				for j in range(p):
+					ele[te,0] = self.dofs[e,i*(p+1)+j]
+					ele[te,1] = self.dofs[e,i*(p+1)+j+1] 
+					ele[te,2] = self.dofs[e,(i+1)*(p+1)+j+1]
+					ele[te,3] = self.dofs[e,(i+1)*(p+1)+j]
+					te += 1 
+
+		lomesh = mesh.AbstractMesh(nodes, ele, self.mesh.order)
+		lospace = H1Space(lomesh, self.btype, 1, self.vdim) 
+		return lospace 
 
 class L2Space(FESpace):
 	def __init__(self, mesh, btype, p, vdim=1):

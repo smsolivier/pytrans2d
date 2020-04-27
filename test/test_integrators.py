@@ -180,3 +180,14 @@ def test_face():
 		[0,0,-(1/6),-(1/12),-(1/6),-(1/12),0,0],[0,0,-(1/12),-(1/6),-(1/12),-(1/6),0,0],
 		[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]])
 	assert(vja==pytest.approx(vja_ex))
+
+def test_block():
+	mesh = RectMesh(3,3)
+	space = H1Space(mesh, LobattoBasis, 2, 2)
+	Mt1 = AssembleBlocks(space, VectorMassIntegrator, lambda x: 1, 5)
+	Mt2 = AssembleBlocks(space, VectorMassIntegrator, lambda x: 2, 5) 
+	Mt3 = Mt1 + Mt2 
+	Mt1 += Mt2 
+	for i in range(2):
+		for j in range(2):
+			assert(spla.norm(Mt1[i,j] - Mt3[i,j])<1e-15)

@@ -28,17 +28,18 @@ class IterativeSolver:
 		if (self.LOUD):
 			print(self.space + 'i={:3}, norm={:.3e}, {:.2f} s/iter'.format(self.it, self.norm, self.el[-1]))
 
+	def IsConverged(self):
+		return not(self.it==self.maxiter)
+
 class BlockLDU(IterativeSolver):
 	def __init__(self, itol, maxiter, inner=1, LOUD=False):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)
 		self.inner = inner 
 
-	def Solve(self, A, Ainv, B, C, D, rhs):
+	def Solve(self, A, B, C, D, Ainv, S, M, rhs):
 		self.it = 0
-		M = sp.bmat([[A,B], [C,D]]).tocsc()
 		CAinv = C*Ainv 
 		AinvB = Ainv*B 
-		S = D - C*AinvB 
 		amg = pyamg.ruge_stuben_solver(S.tocsr())
 
 		def Prec(b):
@@ -202,9 +203,9 @@ class AMGSolver(IterativeSolver):
 		if (self.inner>1):
 			raise AttributeError('have to change amg.aspreconditioner to get more than 1 vcycle/iteration')
 
-	def Solve(self, A, b):
+	def Solve(self, A, Ahat, b):
 		self.it = 0
-		amg = pyamg.ruge_stuben_solver(A.tocsr())
+		amg = pyamg.ruge_stuben_solver(Ahat.tocsr())
 		self.start = time.time()
 		x, info = spla.gmres(A.tocsc(), b, M=amg.aspreconditioner(cycle='V'), callback=self.Callback, 
 			callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)

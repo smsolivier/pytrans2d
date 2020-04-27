@@ -48,7 +48,9 @@ def test_blockldu():
 	rhs = np.concatenate((np.zeros(J_space.Nu), f))
 
 	solver = BlockLDU(1e-10, 50, 1, False)
-	x = solver.Solve(Mt, sp.diags(1/Mtl.diagonal()), -D.transpose(), D, Ma, rhs)
+	Ainv = sp.diags(1/Mtl.diagonal())
+	S = Ma + D*Ainv*D.transpose()
+	x = solver.Solve(Mt, -D.transpose(), D, Ma, Ainv, S, A, rhs)
 	res = np.linalg.norm(A*x - rhs)
 	assert(res<1e-10)
 

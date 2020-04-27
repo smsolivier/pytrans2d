@@ -55,7 +55,7 @@ sn = P1SA(sweep)
 psi = TVector(space, quad)
 phi_sn = sn.SourceIteration(psi)
 solver = BlockLDU(1e-10, 1000, 1, False)
-vef = VEF(phi_space, J_space, sweep, solver)
+vef = VEF(phi_space, J_space, sweep, solver, True)
 # vef.full_lump = True
 phi, J = vef.Mult(psi)
 print('gmres: norm={:.3e}, it={}'.format(solver.norm, solver.it))

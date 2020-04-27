@@ -9,6 +9,7 @@ from ..ext import linalg
 from . import sn 
 from . import qdf 
 from .. import utils 
+from ..fem import linsolver 
 
 def WeakEddDivIntegrator(el1, el2, trans, qdf, qorder):
 	elmat = np.zeros((el1.Nn*2, el2.Nn))
@@ -89,7 +90,7 @@ class AbstractVEF(sn.Sn):
 		self.sigma_a = lambda x: sweeper.sigma_t(x) - sweeper.sigma_s(x)
 
 		self.Mt = fem.Assemble(self.J_space, fem.VectorMassIntegrator, sweeper.sigma_t, 2*p+1)
-		self.Mtl = fem.Assemble(self.J_space, fem.VectorMassIntegratorRowSum, sweeper.sigma_t, 2*p+1)
+		self.Mtl = fem.AssembleBlocks(self.J_space, fem.VectorMassIntegratorRowSum, sweeper.sigma_t, 2*p+1)
 		self.Ma = fem.Assemble(self.phi_space, fem.MassIntegrator, self.sigma_a, 2*p+1)
 		self.D = fem.MixAssemble(self.phi_space, self.J_space, fem.MixDivIntegrator, 1, 2*p+1)
 
@@ -139,10 +140,15 @@ class AbstractVEF(sn.Sn):
 		return phi		
 
 class VEF(AbstractVEF):
-	def __init__(self, phi_space, J_space, sweeper, lin_solver=None):
+	def __init__(self, phi_space, J_space, sweeper, lin_solver=None, lorefine=False):
 		AbstractVEF.__init__(self, phi_space, J_space, sweeper, lin_solver)
 		self.full_lump = False
 		self.direct_inv = False 
+		self.lorefine = lorefine
+		if (self.lorefine):
+			Jlo = self.J_space.LORefine()
+			phi_lo = fem.L2Space(Jlo.mesh, self.phi_space.btype, 0)
+			self.low = VEF(phi_lo, Jlo, self.sweep)
 
 	def Mult(self, psi):
 		self.qdf.Compute(psi)
@@ -152,16 +158,34 @@ class VEF(AbstractVEF):
 
 		A = self.Mt + B
 		rhs = np.concatenate((self.Q1+qin, self.Q0))
+		M = sp.bmat([[A, G], [self.D, self.Ma]]).tocsc()
 
 		if (self.lin_solver==None):
-			M = sp.bmat([[A, G], [self.D, self.Ma]])
-			x = spla.spsolve(M.tocsc(), rhs) 
+			x = spla.spsolve(M, rhs) 
+		elif (self.lorefine):
+			Glo = fem.MixAssemble(self.low.J_space, self.low.phi_space, WeakEddDivIntegrator, self.qdf, 2*self.p+1)
+			Blo = fem.BdrFaceAssembleBlocks(self.low.J_space, 
+				MLBdrIntegratorFullRowSum if self.full_lump else MLBdrIntegratorRowSum, self.qdf, 2*self.p+1)
+			B = fem.BdrFaceAssemble(self.low.J_space, MLBdrIntegrator, self.qdf, 2*self.p+1)
+			Alow = self.low.Mt + B 
+			Al = self.low.Mtl + Blo 
+			a = Al[0,0].diagonal()
+			b = Al[0,1].diagonal()
+			c = Al[1,0].diagonal()
+			d = Al[1,1].diagonal()
+			w = 1/(a - b/d*c)
+			x = -1/a*b*w
+			z = 1/(d - c/a*b)
+			y = -1/d*c*z 
+			Alinv = sp.bmat([[sp.diags(w), sp.diags(x)], [sp.diags(y), sp.diags(z)]])
+			S = self.low.Ma - self.low.D*Alinv*Glo 
+			x = self.lin_solver.Solve(Alow, Glo, self.low.D, self.low.Ma, Alinv, S, M, rhs) 
 		else:
 			if not(self.direct_inv):
-				Al = fem.AssembleBlocks(self.J_space, fem.VectorMassIntegratorRowSum, self.sweep.sigma_t, 2*self.p+1)
+				# Al = fem.AssembleBlocks(self.J_space, fem.VectorMassIntegratorRowSum, self.sweep.sigma_t, 2*self.p+1)
 				Bl = fem.BdrFaceAssembleBlocks(self.J_space, 
 					MLBdrIntegratorFullRowSum if self.full_lump else MLBdrIntegratorRowSum, self.qdf, 2*self.p+1)
-				Al += Bl 
+				Al = self.Mtl + Bl 
 				a = Al[0,0].diagonal()
 				b = Al[0,1].diagonal()
 				c = Al[1,0].diagonal()
@@ -171,10 +195,12 @@ class VEF(AbstractVEF):
 				z = 1/(d - c/a*b)
 				y = -1/d*c*z 
 				Alinv = sp.bmat([[sp.diags(w), sp.diags(x)], [sp.diags(y), sp.diags(z)]])
+				S = self.Ma - self.D*Alinv*G 
 			else:
 				Alinv = spla.inv(A) 
+				S = self.Ma - self.D*Alinv*G 
 
-			x = self.lin_solver.Solve(A, Alinv, G, self.D, self.Ma, rhs) 
+			x = self.lin_solver.Solve(A, G, self.D, self.Ma, Alinv, S, M, rhs) 
 
 		phi = fem.GridFunction(self.phi_space)
 		J = fem.GridFunction(self.J_space)

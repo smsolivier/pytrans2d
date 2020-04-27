@@ -60,7 +60,7 @@ class H1Space(FESpace):
 		self.bnodes = np.unique(self.bnodes)
 
 	def LORefine(self):
-		nodes = np.zeros((self.Nu, 2))
+		nodes = np.zeros((int(self.Nu/self.vdim), 2))
 		for e in range(self.Ne):
 			trans = self.mesh.trans[e] 
 			for n in range(self.el.nodes.shape[0]):
@@ -68,6 +68,7 @@ class H1Space(FESpace):
 
 		p = self.el.basis.p 
 		ele = np.zeros((self.Ne*p**2, 4), dtype=int) 
+		dofs = np.zeros((self.Ne*p**2, 4), dtype=int)
 		te = 0 
 		for e in range(self.Ne):
 			for i in range(p):
@@ -76,20 +77,50 @@ class H1Space(FESpace):
 					ele[te,1] = self.dofs[e,i*(p+1)+j+1] 
 					ele[te,2] = self.dofs[e,(i+1)*(p+1)+j+1]
 					ele[te,3] = self.dofs[e,(i+1)*(p+1)+j]
+
+					dofs[te,0] = self.dofs[e,i*(p+1)+j]
+					dofs[te,1] = self.dofs[e,i*(p+1)+j+1]
+					dofs[te,2] = self.dofs[e,(i+1)*(p+1)+j] 
+					dofs[te,3] = self.dofs[e,(i+1)*(p+1)+j+1] 
 					te += 1 
 
+		vdofs = np.zeros((self.Ne*p**2, 4*self.vdim), dtype=int)
+		c = np.max(dofs)+1
+		for e in range(vdofs.shape[0]):
+			sdofs = dofs[e]
+			for d in range(1, self.vdim):
+				sdofs = np.append(sdofs, dofs[e] + c*d) 
+
+			vdofs[e] = sdofs
 		lomesh = mesh.AbstractMesh(nodes, ele, self.mesh.order)
 		lospace = H1Space(lomesh, self.btype, 1, self.vdim) 
+		lospace.dofs = vdofs 
+
+		bnodes = [] 
+		p = 1
+		Nn = 4
+		n_on_face = [np.arange(0,p+1), 
+			np.arange(p, Nn+1, p+1), np.arange(p*(p+1), Nn), 
+			np.arange(0, p*(p+1)+1, p+1)]
+		for f in lomesh.bface:
+			bnodes += vdofs[f.ElNo1, n_on_face[f.f1]].tolist()
+		bnodes = np.unique(bnodes)
+		lospace.bnodes = bnodes
 		return lospace 
 
 class L2Space(FESpace):
-	def __init__(self, mesh, btype, p, vdim=1):
+	def __init__(self, mesh, btype, p, vdim=1, bfs=True):
 		FESpace.__init__(self, mesh, btype, p, vdim)
 		c = 0
 		sdofs = np.zeros((self.Ne, self.el.Nn))
-		for v in self.mesh.graph.bfsiter(0):
-			sdofs[v.index] = np.arange(c, self.el.Nn+c)
-			c += self.el.Nn
+		if (bfs):
+			for v in self.mesh.graph.bfsiter(0):
+				sdofs[v.index] = np.arange(c, self.el.Nn+c)
+				c += self.el.Nn
+		else:
+			for e in range(self.Ne):
+				sdofs[e] = np.arange(c, self.el.Nn+c)
+				c += self.el.Nn 
 
 		for e in range(self.Ne):
 			vdofs = sdofs[e] 

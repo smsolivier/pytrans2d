@@ -16,7 +16,7 @@ if (len(sys.argv)>2):
 start = time.time()
 mesh = RectMesh(N, N)
 print('mesh time = {:.3f} s'.format(time.time() - start))
-space = H1Space(mesh, LobattoBasis, p)
+space = H1Space(mesh, LagrangeBasis, p)
 lospace = space.LORefine()
 start = time.time()
 print('space time = {:.3f} s'.format(time.time() - start))
@@ -44,11 +44,21 @@ print('bc time = {:.3f} s'.format(time.time() - start))
 
 start = time.time()
 T = GridFunction(space)
-solver = AMGSolver(1e-10, 500, 1, False)
-T.data = solver.Solve(K, K, f)
-print('amg: it={}, norm={:.3e}'.format(solver.it, solver.norm))
-T.data = solver.Solve(K, Klow, f)
-print('low: it={}, norm={:.3e}'.format(solver.it, solver.norm))
+amg = pyamg.ruge_stuben_solver(Klow.tocsr())
+r = []
+T.data = amg.solve(f, maxiter=500, residuals=r)
+print('it={}'.format(len(r)))
+
+amg = pyamg.ruge_stuben_solver(K.tocsr())
+r = []
+T.data = amg.solve(f, maxiter=500, residuals=r)
+print('it={}'.format(len(r)))
+
+# solver = AMGSolver(1e-10, 500, 1, False)
+# T.data = solver.Solve(K, K, f)
+# print('amg: it={}, norm={:.3e}'.format(solver.it, solver.norm))
+# T.data = solver.Solve(K, Klow, f)
+# print('low: it={}, norm={:.3e}'.format(solver.it, solver.norm))
 # print('solve time = {:.3f} s'.format(time.time() - start))
 
 # err = T.L2Error(lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*p)

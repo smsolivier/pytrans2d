@@ -202,9 +202,8 @@ class AMGSolver(IterativeSolver):
 		self.it = 0
 		amg = pyamg.ruge_stuben_solver(Ahat.tocsr())
 		self.start = time.time()
-		# x, info = spla.gmres(A.tocsc(), b, M=amg.aspreconditioner(cycle='V'), callback=self.Callback, 
-		# 	callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)
-		x,info = spla.cg(A.tocsc(), b, M=amg.aspreconditioner(cycle='V'), callback=self.Callback, tol=self.itol, maxiter=self.maxiter)
+		x, info = spla.gmres(A.tocsc(), b, M=amg.aspreconditioner(cycle='V'), callback=self.Callback, 
+			callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)
 		self.Cleanup(info)
 
 		return x

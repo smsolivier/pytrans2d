@@ -196,14 +196,15 @@ class AMGSolver(IterativeSolver):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)
 		self.inner = inner 
 		if (self.inner>1):
-			raise AttributeError('have to change amg.aspreconditioner to get more than 1 vcycle/iteration')
+			raise NotImplementedError('have to change amg.aspreconditioner to get more than 1 vcycle/iteration')
 
 	def Solve(self, A, Ahat, b):
 		self.it = 0
 		amg = pyamg.ruge_stuben_solver(Ahat.tocsr())
 		self.start = time.time()
-		x, info = spla.gmres(A.tocsc(), b, M=amg.aspreconditioner(cycle='V'), callback=self.Callback, 
-			callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)
+		# x, info = spla.gmres(A.tocsc(), b, M=amg.aspreconditioner(cycle='V'), callback=self.Callback, 
+		# 	callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)
+		x,info = spla.cg(A.tocsc(), b, M=amg.aspreconditioner(cycle='V'), callback=self.Callback, tol=self.itol, maxiter=self.maxiter)
 		self.Cleanup(info)
 
 		return x

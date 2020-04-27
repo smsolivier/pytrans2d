@@ -79,8 +79,10 @@ def assemble_lor_diffusion(Ne, p):
 
 @pytest.mark.parametrize('p', [1,2,3,4])
 def test_lor_mms(p):
-	E1 = np.array(assemble_lor_diffusion(3, p))
-	E2 = np.array(assemble_lor_diffusion(6, p))
+	Ne = 3
+	E1 = np.array(assemble_lor_diffusion(Ne, p))
+	E2 = np.array(assemble_lor_diffusion(2*Ne, p))
 	ooa = np.log2(E1/E2)
+	print('ooa = {:.3f} ({:.3e}, {:.3e})'.format(ooa, E1, E2))
 	assert(ooa == pytest.approx(2, abs=.1))
 	# assert(ooa == pytest.approx(np.array([1,1]), abs=.1))

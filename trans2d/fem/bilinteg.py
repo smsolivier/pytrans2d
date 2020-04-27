@@ -5,6 +5,7 @@ import scipy.sparse.linalg as spla
 from . import fespace as fes 
 from .quadrature import quadrature 
 from ..ext import linalg 
+from .element import Element
 
 class COOMatrix:
 	def __init__(self, m, n=None, zero_tol=1e-14):
@@ -213,6 +214,30 @@ def AssembleBlocks(space, integrator, c, qorder):
 		D[dofs,dofs] = elmat[half:, half:]
 
 	return BlockMatrix([[A.Get(), B.Get()], [C.Get(), D.Get()]])
+
+def AssembleLOR(space, integrator, c, qorder):
+	# lomesh = space.LORefine().mesh 
+	el = Element(space.btype, 1)
+	p = space.el.basis.p 
+	A = COOMatrix(space.Nu)
+
+	for e in range(space.Ne):
+		trans = space.mesh.trans[e]
+		for i in range(p):
+			for j in range(p):
+				nid = np.array([i*(p+1)+j, i*(p+1)+j+1, (i+1)*(p+1)+j+1, (i+1)*(p+1)+j])
+				box = np.zeros((len(nid), 2))
+				for n in range(len(nid)):
+					box[n] = trans.Transform(space.el.nodes[nid[n]])
+
+				rtrans = type(trans)(box) 
+				elmat = integrator(el, rtrans, c, qorder)
+				dofid = nid.copy()
+				dofid[[2,3]] = nid[[3,2]] # swap to match different ordering of mesh and fespace 
+				dofs = space.dofs[e,dofid] 
+				A[dofs, dofs] = elmat 
+
+	return A.Get()
 
 def FaceAssemble(space, integrator, c, qorder):
 	A = COOMatrix(space.Nu)

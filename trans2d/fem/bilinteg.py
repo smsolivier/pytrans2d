@@ -40,6 +40,16 @@ class BlockMatrix:
 
 		return self
 
+	def __add__(self, a):
+		lst = [[] for i in self.lst]
+		for i in range(len(self.lst)):
+			for j in range(len(self.lst[i])):
+				A = self[i,j] 
+				B = a[i,j]
+				lst[i].append(A+B)
+
+		return BlockMatrix(lst)
+
 	def __getitem__(self, key):
 		return self.lst[key[1]][key[0]]
 

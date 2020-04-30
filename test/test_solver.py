@@ -23,7 +23,7 @@ def test_amg():
 
 	T = GridFunction(space)
 	solver = AMGSolver(1e-12, 20, 1, False)
-	T.data = solver.Solve(A, f)
+	T.data = solver.Solve(A, A, f)
 
 	res = np.linalg.norm(A*T.data - f)
 	assert(res<1e-12)

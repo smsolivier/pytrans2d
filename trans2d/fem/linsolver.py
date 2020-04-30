@@ -31,6 +31,13 @@ class IterativeSolver:
 	def IsConverged(self):
 		return not(self.it==self.maxiter)
 
+	def Cleanup(self, info):
+		if (info>0 or self.it==self.maxiter):
+			warnings.warn('linear solver not converged. final tol={:.3e}, info={}'.format(self.norm, info), 
+				utils.ToleranceWarning, stacklevel=2)
+		if (info<0):
+			raise RuntimeError('linear solver error. info={}'.format(info))
+
 class BlockLDU(IterativeSolver):
 	def __init__(self, itol, maxiter, inner=1, LOUD=False):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)
@@ -58,11 +65,7 @@ class BlockLDU(IterativeSolver):
 		self.start = time.time()
 		x, info = spla.gmres(M, rhs, M=p2x2, tol=0, atol=self.itol,
 			maxiter=self.maxiter, callback=self.Callback, callback_type='legacy', restart=None)
-
-		if (info>0 or self.it==self.maxiter):
-			warnings.warn('gmres not converged. final tol = {:.3e}'.format(self.norm), utils.ToleranceWarning)
-		if (info<0):
-			raise AttributeError('gmres exited with info = {}'.format(info))
+		self.Cleanup(info)
 
 		return x 
 
@@ -161,11 +164,7 @@ class BlockTri(IterativeSolver):
 		p = spla.LinearOperator(M.shape, Prec)
 		self.start = time.time()
 		x, info = spla.gmres(M, rhs, M=p, tol=self.itol, maxiter=self.maxiter, callback=self.Callback)
-
-		if (info>0 or self.it==self.maxiter):
-			warnings.warn('gmres not converged. final tol = {:.3e}'.format(self.norm), utils.ToleranceWarning)
-		if (info<0):
-			raise AttributeError('gmres exited with info = {}'.format(info))
+		self.Cleanup(info)
 
 		return x 
 
@@ -188,11 +187,7 @@ class BlockDiag(IterativeSolver):
 		p = spla.LinearOperator(M.shape, Prec)
 		self.start = time.time()
 		x, info = spla.gmres(M, rhs, M=p, tol=self.itol, maxiter=self.maxiter, callback=self.Callback)
-
-		if (info>0 or self.it==self.maxiter):
-			warnings.warn('gmres not converged. final tol = {:.3e}'.format(self.norm), utils.ToleranceWarning)
-		if (info<0):
-			raise AttributeError('gmres exited with info = {}'.format(info))
+		self.Cleanup(info)
 
 		return x 
 
@@ -201,7 +196,7 @@ class AMGSolver(IterativeSolver):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)
 		self.inner = inner 
 		if (self.inner>1):
-			raise AttributeError('have to change amg.aspreconditioner to get more than 1 vcycle/iteration')
+			raise NotImplementedError('have to change amg.aspreconditioner to get more than 1 vcycle/iteration')
 
 	def Solve(self, A, Ahat, b):
 		self.it = 0
@@ -209,10 +204,6 @@ class AMGSolver(IterativeSolver):
 		self.start = time.time()
 		x, info = spla.gmres(A.tocsc(), b, M=amg.aspreconditioner(cycle='V'), callback=self.Callback, 
 			callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)
-
-		if (info>0 or self.it==self.maxiter):
-			warnings.warn('gmres not converged. final tol = {:.3e}'.format(self.norm), utils.ToleranceWarning)
-		if (info<0):
-			raise AttributeError('gmres exited with info = {}'.format(info))
+		self.Cleanup(info)
 
 		return x

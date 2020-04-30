@@ -62,8 +62,27 @@ def lorefine_diffusion_solve(Ne, p):
 	J.data = x[:J_space.Nu]
 	return phi.L2Error(phi_ex, 2*p+2), J.L2Error(Jex, 2*p+2)
 
-def test_lor_mms():
-	E1 = np.array(lorefine_diffusion_solve(5, 3))
-	E2 = np.array(lorefine_diffusion_solve(10, 3))
+def assemble_lor_diffusion(Ne, p):
+	mesh = RectMesh(Ne, Ne)
+	space = H1Space(mesh, LobattoBasis, p)
+
+	K = AssembleLOR(space, DiffusionIntegrator, lambda x: 1, 2*p+2)
+	f = AssembleRHS(space, DomainIntegrator, lambda x: 2*np.pi**2*np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*p+1)
+	K = K.tolil()
+	K[space.bnodes,:] = 0 
+	K[space.bnodes,space.bnodes] = 1
+	f[space.bnodes] = 0 
+
+	T = GridFunction(space)
+	T.data = spla.spsolve(K.tocsc(), f)
+	return T.L2Error(lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*p+2)
+
+@pytest.mark.parametrize('p', [1,2,3,4])
+def test_lor_mms(p):
+	Ne = 3
+	E1 = np.array(assemble_lor_diffusion(Ne, p))
+	E2 = np.array(assemble_lor_diffusion(2*Ne, p))
 	ooa = np.log2(E1/E2)
-	assert(ooa == pytest.approx(np.array([1,1]), abs=.1))
+	print('ooa = {:.3f} ({:.3e}, {:.3e})'.format(ooa, E1, E2))
+	assert(ooa == pytest.approx(2, abs=.1))
+	# assert(ooa == pytest.approx(np.array([1,1]), abs=.1))

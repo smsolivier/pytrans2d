@@ -34,7 +34,6 @@ class AbstractMesh:
 		for n in range(self.Nn):
 			els = els_per_node[n]
 			if (len(els)>1):
-				connect = np.zeros((len(els), len(els)), dtype=bool) 
 				for e in range(len(els)):
 					for ep in range(e+1, len(els)):
 						nid1 = self.ele[els[e]]

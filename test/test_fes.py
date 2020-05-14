@@ -40,7 +40,7 @@ def lorefine_diffusion_solve(Ne, p):
 	ho_space = H1Space(mesh, LobattoBasis, p, 2)
 	J_space = ho_space.LORefine()
 	mesh = J_space.mesh 
-	phi_space = L2Space(mesh, LegendreBasis, 0)
+	phi_space = L2Space(mesh, LegendreBasis, 0, 1, False)
 	eps = 1e-2
 	sigma_t = lambda x: 1/eps 
 	sigma_a = lambda x: eps
@@ -85,4 +85,13 @@ def test_lor_mms(p):
 	ooa = np.log2(E1/E2)
 	print('ooa = {:.3f} ({:.3e}, {:.3e})'.format(ooa, E1, E2))
 	assert(ooa == pytest.approx(2, abs=.1))
-	# assert(ooa == pytest.approx(np.array([1,1]), abs=.1))
+
+@pytest.mark.parametrize('p', [1,2,3,4])
+def test_lor_mixdiff(p):
+	Ne = 3
+	E1 = np.array(lorefine_diffusion_solve(Ne, p))
+	E2 = np.array(lorefine_diffusion_solve(2*Ne, p))
+	ooa = np.log2(E1/E2)
+	print('phi ooa = {:.3f} ({:.3e}, {:.3e})'.format(ooa[0], E1[0], E2[0]))
+	print('J ooa = {:.3f} ({:.3e}, {:.3e})'.format(ooa[1], E1[1], E2[1]))
+	assert(ooa[0] == pytest.approx(1, abs=.1))

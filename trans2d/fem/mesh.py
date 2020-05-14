@@ -54,7 +54,8 @@ class AbstractMesh:
 
 		# loop over edges to build interior face transformations 
 		self.iface = [] 
-		ref_geom = np.array([[-1,-1], [1,-1], [1,1], [-1,1]])
+		ref_geom = np.array([[-1,-1], [1,-1], [-1,1], [1,1]])
+		ref_edge = [[0,1], [1,3], [3,2], [2,0]]
 		self.iface2el = np.zeros((self.Ne, 4), dtype=int) - 1
 		for edge in self.graph.es:
 			s = edge.source 
@@ -62,9 +63,9 @@ class AbstractMesh:
 			f1, f2 = self.GetOrientation(s,t)
 
 			n = 4
-			rline1 = ref_geom[[f1, (f1+1)%n], :]
-			rline2 = ref_geom[[(f2+1)%n, f2], :] # rotate 
-			nodes = self.ele[s, [f1, (f1+1)%n]]
+			rline1 = ref_geom[ref_edge[f1], :]
+			rline2 = ref_geom[ref_edge[f2][::-1], :] # rotate 
+			nodes = self.ele[s, ref_edge[f1]]
 			pline = self.nodes[nodes, :]
 
 			self.iface.append(FaceInfo(
@@ -91,12 +92,13 @@ class AbstractMesh:
 				s_node = self.ele[e]
 				t_node = self.ele[t]
 				for i in range(n):
-					if (s_node[i] in t_node and s_node[(i+1)%n] in t_node): 
+					lf = ref_edge[i]
+					if (s_node[lf[0]] in t_node and s_node[lf[1]] in t_node): 
 						faceno[i] = True
 			for f in range(n):
 				if not(faceno[f]):
-					rline = ref_geom[[f, (f+1)%n], :]
-					pline = self.nodes[self.ele[e, [f, (f+1)%n]]]
+					rline = ref_geom[ref_edge[f], :]
+					pline = self.nodes[self.ele[e, ref_edge[f]]]
 					self.bface.append(FaceInfo(
 						[e], 
 						[AffineFaceTrans(rline)], 
@@ -112,12 +114,19 @@ class AbstractMesh:
 		s_node = self.ele[s] 
 		t_node = self.ele[t] 
 		n = len(s_node)
+		edge = [[0,1], [1,3], [3,2], [2,0]]
+		f1 = -1 
+		f2 = -1 
 		for i in range(n):
-			if (s_node[i] in t_node and s_node[(i+1)%n] in t_node): 
+			lf = edge[i]
+			if (s_node[lf[0]] in t_node and s_node[lf[1]] in t_node): 
 				f1 = i
 
-			if (t_node[i] in s_node and t_node[(i+1)%n] in s_node):
+			if (t_node[lf[0]] in s_node and t_node[lf[1]] in s_node):
 				f2 = i
+
+		if (f1==-1 or f2==-1):
+			raise RuntimeError('elements {} and {} are not neighbors'.format(s,t)) 
 
 		return f1, f2 
 
@@ -128,8 +137,9 @@ class AbstractMesh:
 		Nn = np.shape(self.nodes)[0] 
 		f.write('POINTS {} float\n'.format(self.Ne*4)) 
 		for e in range(self.Ne):
+			order = [0,1,3,2]
 			for n in range(4):
-				node = self.nodes[self.ele[e][n],:]
+				node = self.nodes[self.ele[e][order[n]],:]
 				f.write('{} {} {}\n'.format(node[0], node[1], 0))
 
 		f.write('CELLS {} {}\n'.format(self.Ne, self.Ne*5)) 
@@ -179,7 +189,7 @@ class AbstractMesh:
 
 class RectMesh(AbstractMesh): 
 	def __init__(self, Nx, Ny, xb=[1,1]):
-		self.order = 0
+		order = 0
 		x1d = np.linspace(0, xb[0], Nx+1)
 		y1d = np.linspace(0, xb[1], Ny+1)
 
@@ -187,99 +197,22 @@ class RectMesh(AbstractMesh):
 		X = x.flatten()
 		Y = y.flatten()
 
-		self.nodes = np.zeros((len(X), 2))
-		self.nodes[:,0] = X 
-		self.nodes[:,1] = Y
-		self.Nn = len(X) 
-		self.ele = np.zeros((Nx*Ny, 4), dtype=int) 
-		self.Ne = Nx*Ny
+		nodes = np.zeros((len(X), 2))
+		nodes[:,0] = X 
+		nodes[:,1] = Y
+		ele = np.zeros((Nx*Ny, 4), dtype=int) 
+		Ne = Nx*Ny
 
 		e = 0 
 		Nnx = Nx+1
 		Nny = Ny+1
 		for i in range(Ny):
 			for j in range(Nx):
-				self.ele[e,0] = i*Nnx + j 
-				self.ele[e,1] = i*Nnx + j + 1 
-				self.ele[e,2] = (i+1)*Nnx + j + 1 
-				self.ele[e,3] = (i+1)*Nnx + j 
+				ele[e,0] = i*Nnx + j 
+				ele[e,1] = i*Nnx + j + 1 
+				ele[e,2] = (i+1)*Nnx + j
+				ele[e,3] = (i+1)*Nnx + j + 1 
 
 				e += 1 
 
-		# build transformations 
-		self.trans = []
-		for e in range(self.Ne):
-			self.trans.append(AffineTrans(self.nodes[self.ele[e]], e))
-
-		# build graph
-		self.graph = igraph.Graph()
-		self.graph.add_vertices(self.Ne)
-		edges = []
-		for i in range(Ny):
-			for j in range(Nx):
-				e = j + i*Nx 
-				if (j<Nx-1):
-					edges.append((e,e+1))
-				if (i<Ny-1):
-					edges.append((e,e+Nx))
-
-		self.graph.add_edges(edges)
-
-		bseq = self.graph.vs(_degree_lt=4)
-		self.bel = [i.index for i in bseq] # element ids of boundary elements 
-
-		# loop over edges to build interior face transformations 
-		self.iface = [] 
-		ref_geom = np.array([[-1,-1], [1,-1], [1,1], [-1,1]])
-		self.iface2el = np.zeros((self.Ne, 4), dtype=int) - 1
-		for edge in self.graph.es:
-			s = edge.source 
-			t = edge.target 
-			f1, f2 = self.GetOrientation(s,t)
-
-			n = 4
-			rline1 = ref_geom[[f1, (f1+1)%n], :]
-			rline2 = ref_geom[[(f2+1)%n, f2], :] # rotate 
-			nodes = self.ele[s, [f1, (f1+1)%n]]
-			pline = self.nodes[nodes, :]
-
-			self.iface.append(FaceInfo(
-				[s,t], # element numbers 
-				[AffineFaceTrans(rline1), AffineFaceTrans(rline2)], # 1D -> 2D transformations
-				[self.trans[s], self.trans[t]], # 2D element transformations 
-				AffineFaceTrans(pline), # transformation of face
-				[f1, f2], # face orientations 
-				edge.index # face number 
-				))
-			self.iface2el[s, f1] = edge.index
-			self.iface2el[t, f2] = edge.index 
-
-		self.bface = [] 
-		self.bface2el = np.zeros((self.Ne, 4), dtype=int) - 1 
-		bfn = 0 
-		for e in self.bel:
-			v = self.graph.vs(e)[0]
-			# determine face numbers not in graph 
-			n = 4
-			faceno = np.zeros(n, dtype=bool)
-			for neigh in v.neighbors():
-				t = neigh.index 
-				s_node = self.ele[e]
-				t_node = self.ele[t]
-				for i in range(n):
-					if (s_node[i] in t_node and s_node[(i+1)%n] in t_node): 
-						faceno[i] = True
-			for f in range(n):
-				if not(faceno[f]):
-					rline = ref_geom[[f, (f+1)%n], :]
-					pline = self.nodes[self.ele[e, [f, (f+1)%n]]]
-					self.bface.append(FaceInfo(
-						[e], 
-						[AffineFaceTrans(rline)], 
-						[self.trans[e]], 
-						AffineFaceTrans(pline), 
-						[f], 
-						bfn
-						))
-					self.bface2el[e, f] = bfn 
-					bfn += 1 
+		AbstractMesh.__init__(self, nodes, ele, order)

@@ -244,6 +244,8 @@ def AssembleLOR(space, integrator, c, qorder):
 				elmat = integrator(el, rtrans, c, qorder)
 				dofid = nid.copy()
 				dofid[[2,3]] = nid[[3,2]] # swap to match different ordering of mesh and fespace 
+				if (space.vdim>1):
+					dofid = np.append(dofid, dofid+(p+1)**2) 
 				dofs = space.dofs[e,dofid] 
 				A[dofs, dofs] = elmat 
 

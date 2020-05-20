@@ -2,6 +2,7 @@
 
 import numpy as np
 import igraph 
+import matplotlib.pyplot as plt 
 
 from .eltrans import AffineTrans, LinearTrans, AffineFaceTrans, FaceInfo
 
@@ -187,11 +188,29 @@ class AbstractMesh:
 					for n in range(data.shape[0]):
 						f.write('{} {} 0\n'.format(data[n,0], data[n,1]))
 
+	def Plot(self):
+		from matplotlib.patches import Polygon
+		from matplotlib.collections import PatchCollection
+		fig = plt.figure()
+		for e in range(self.Ne):
+			nodes = self.nodes[self.ele[e]]
+			nodes[[2,3]] = nodes[[3,2]]
+			poly = Polygon(nodes, fill=False)
+			plt.gca().add_patch(poly)
+
+			xc = self.trans[e].Transform([0,0])
+			plt.annotate(str(e), xy=(xc[0], xc[1]), 
+				verticalalignment='center', horizontalalignment='center')
+
+		for n in range(self.nodes.shape[0]):
+			plt.annotate(str(n), xy=(self.nodes[n,0], self.nodes[n,1]), 
+				verticalalignment='bottom', horizontalalignment='left')
+
 class RectMesh(AbstractMesh): 
-	def __init__(self, Nx, Ny, xb=[1,1]):
+	def __init__(self, Nx, Ny, xl=[0,0], xh=[1,1]):
 		order = 0
-		x1d = np.linspace(0, xb[0], Nx+1)
-		y1d = np.linspace(0, xb[1], Ny+1)
+		x1d = np.linspace(xl[0], xh[0], Nx+1)
+		y1d = np.linspace(xl[1], xh[1], Ny+1)
 
 		x, y = np.meshgrid(x1d, y1d)
 		X = x.flatten()

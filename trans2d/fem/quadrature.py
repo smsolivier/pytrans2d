@@ -1,5 +1,6 @@
 import numpy as np 
 import math
+import os 
 
 class Quadrature:
 	def __init__(self, pmax):
@@ -37,4 +38,5 @@ class Quadrature:
 	def GetFromPoints1D(self, n):
 		return self.ip_leg1d[n], self.w_leg1d[n] 
 
-quadrature = Quadrature(20)
+quadrature = Quadrature(int(os.environ['MAX_QORDER'])
+	if 'MAX_QORDER' in os.environ else 20)

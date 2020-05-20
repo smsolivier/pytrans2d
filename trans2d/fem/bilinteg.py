@@ -76,6 +76,17 @@ def MassIntegrator(el, trans, c, qorder):
 
 	return elmat 
 
+def MassIntegratorRowSum(el, trans, c, qorder):
+	M = MassIntegrator(el, trans, c, qorder)
+	for i in range(M.shape[0]):
+		tmp = 0 
+		for j in range(M.shape[1]):
+			tmp += M[i,j]
+			M[i,j] = 0
+		M[i,i] = tmp 
+
+	return M 
+
 def MixMassIntegrator(el1, el2, trans, c, qorder):
 	elmat = np.zeros((el1.Nn, el2.Nn))
 	ip, w = quadrature.Get(qorder)

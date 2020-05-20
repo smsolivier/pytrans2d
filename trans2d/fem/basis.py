@@ -3,7 +3,7 @@ import quadpy
 
 def GenLobatto(p):
 	N = p+1 
-	rule = quadpy.line_segment.gauss_lobatto(N)
+	rule = quadpy.line_segment.gauss_lobatto(int(N))
 	# ip = np.around(rule.points, 14) 
 	ip = rule.points 
 	B, dB = SolveVandermonde(ip)

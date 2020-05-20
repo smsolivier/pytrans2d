@@ -69,6 +69,17 @@ class GridFunction:
 				l2 += np.dot(this-that, this-that) * w[n] * trans.Jacobian(ip[n])
 		return np.sqrt(l2)
 
+	def L2Norm(self, qorder):
+		ip, w = quadrature.Get(qorder)
+		l2 = 0 
+		for e in range(self.space.Ne):
+			trans = self.space.mesh.trans[e] 
+			for n in range(len(w)):
+				val = self.Interpolate(e, ip[n]) 
+				l2 += np.dot(val, val) * w[n] * trans.Jacobian(ip[n]) 
+
+		return np.sqrt(l2) 
+
 	def ElementData(self):
 		if (self.space.vdim==1):
 			data = np.zeros(self.space.Ne)

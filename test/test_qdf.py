@@ -3,7 +3,7 @@
 from trans2d import * 
 import pytest 
 
-mesh = RectMesh(3,3, [3,3])
+mesh = RectMesh(3,3, [0,0], [3,3])
 space = L2Space(mesh, LagrangeBasis, 1)
 quad = LevelSym(16)
 psi = TVector(space, quad) 
@@ -22,7 +22,7 @@ def test_isotropic():
 	assert(G==pytest.approx(.5, abs=1e-2))
 
 def test_quadratic():
-	mesh = RectMesh(3,3, [1,1])
+	mesh = RectMesh(3,3, [0,0], [1,1])
 	space = L2Space(mesh, LagrangeBasis, 5)
 	psi = TVector(space, quad) 
 	alpha = lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]) + 10

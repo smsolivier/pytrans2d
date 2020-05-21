@@ -86,7 +86,7 @@ def test_weakmixdiv():
 	assert(D==pytest.approx(-Dex))
 
 def test_face():
-	mesh = RectMesh(3,3, [3,3])
+	mesh = RectMesh(3,3, [0,0], [3,3])
 	fi = mesh.iface[0]
 	face = fi.face 
 

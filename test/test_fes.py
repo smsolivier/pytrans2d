@@ -98,5 +98,5 @@ def test_lor_mixdiff(p):
 
 def test_rt():
 	mesh = RectMesh(2,2)
-	space = RTSpace(mesh, 2) 
+	space = RTSpace(mesh, LobattoBasis, LegendreBasis, 2) 
 	assert(space.Nu==84)

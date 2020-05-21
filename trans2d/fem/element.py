@@ -52,10 +52,10 @@ class Element:
 		return np.dot(pgs, u) 
 
 class RTElement:
-	def __init__(self, p):
+	def __init__(self, bc, bd, p):
 		self.p = p 
-		self.bx = [basis.LobattoBasis(p+1), basis.LegendreBasis(p)]
-		self.by = [basis.LegendreBasis(p), basis.LobattoBasis(p+1)]
+		self.bx = [bc(p+1), bd(p)]
+		self.by = [bd(p), bc(p+1)]
 
 		self.Nn = 2*(p+1)*(p+2) 
 		self.nodes = np.zeros((self.Nn, 2)) 
@@ -94,3 +94,5 @@ class RTElement:
 		ds = self.CalcDivShape(xi)
 		return 1/trans.Jacobian(xi)*ds 
 
+	def Interpolate(self, xi, u):
+		return np.dot(self.CalcVShape(xi), u) 

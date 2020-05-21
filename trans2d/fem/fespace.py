@@ -136,10 +136,10 @@ class L2Space(FESpace):
 				self.nodes[self.dofs[e,n]] = trans.Transform(self.el.nodes[n])
 
 class RTSpace:
-	def __init__(self, mesh, p):
+	def __init__(self, mesh, bc, bd, p):
 		self.mesh = mesh 
 		self.p = p 
-		self.el = element.RTElement(p) 
+		self.el = element.RTElement(bc, bd, p) 
 		self.vdim = 2
 		self.Ne = mesh.Ne 
 		self.dofs = np.zeros((self.Ne, self.el.Nn), dtype=int)

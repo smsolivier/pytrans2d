@@ -79,7 +79,7 @@ def mixdiffusion(Ne, p):
 
 def rtdiffusion(Ne, p):
 	mesh = RectMesh(Ne, Ne)
-	rt = RTSpace(mesh, p)
+	rt = RTSpace(mesh, LobattoBasis, LegendreBasis, p)
 	l2 = L2Space(mesh, LegendreBasis, p) 
 	M = Assemble(rt, VectorFEMassIntegrator, lambda x: -1, 2*(p+2)+1)
 	D = MixAssemble(l2, rt, VectorFEDivIntegrator, 1, 2*(p+1)+1)

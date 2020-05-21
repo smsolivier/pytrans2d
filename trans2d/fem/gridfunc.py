@@ -85,11 +85,11 @@ class GridFunction:
 			data = np.zeros(self.space.Ne)
 
 			for e in range(self.space.Ne):
-				data[e] = self.Interpolate(e, [0,0])
+				data[e] = self.Interpolate(e, [0.,0])
 		else:
 			data = np.zeros((self.space.Ne, 2))
 			for e in range(self.space.Ne):
-				data[e] = self.Interpolate(e, [0,0])
+				data[e] = self.Interpolate(e, [0.,0])
 
 		return data 
 

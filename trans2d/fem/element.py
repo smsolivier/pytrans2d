@@ -1,6 +1,7 @@
 import numpy as np 
 from ..ext.horner import PolyVal2D
 from ..ext import linalg 
+from . import basis 
 
 class Element:
 	def __init__(self, btype, p):
@@ -46,3 +47,47 @@ class Element:
 	def InterpolateGradient(self, trans, xi, u):
 		pgs = self.CalcPhysGradShape(trans, xi)
 		return np.dot(pgs, u) 
+
+class RTElement:
+	def __init__(self, p):
+		self.p = p 
+		self.bx = [basis.LobattoBasis(p+1), basis.LegendreBasis(p)]
+		self.by = [basis.LegendreBasis(p), basis.LobattoBasis(p+1)]
+
+		self.Nn = 2*(p+1)*(p+2) 
+		self.nodes = np.zeros((self.Nn, 2)) 
+
+		for i in range(p+1):
+			for j in range(p+2):
+				idx = j + i*(p+2)
+				self.nodes[idx,0] = self.bx[0].ip[j] 
+				self.nodes[idx,1] = self.bx[1].ip[i]
+
+		for i in range(p+2):
+			for j in range(p+1):
+				idx = j + i*(p+1) + (p+1)*(p+2) 
+				self.nodes[idx,0] = self.by[0].ip[j] 
+				self.nodes[idx,1] = self.by[1].ip[i] 
+
+	def CalcShape(self, xi):
+		raise NotImplementedError('this is vector FE')
+
+	def CalcVShape(self, xi):
+		sx = PolyVal2D(self.bx[0].B, self.bx[1].B, np.array(xi)) 
+		sy = PolyVal2D(self.by[0].B, self.by[1].B, np.array(xi)) 
+		return np.block([[sx, np.zeros(len(sx))], 
+			[np.zeros(len(sy)), sy]])
+
+	def CalcPhysVShape(self, trans, xi):
+		vs = self.CalcVShape(xi) 
+		return 1/trans.Jacobian(ip[n])*np.dot(trans.F(xi), vs) 
+
+	def CalcDivShape(self, xi):
+		dsx = PolyVal2D(self.bx[0].dB, self.bx[1].B, np.array(xi)) 
+		dsy = PolyVal2D(self.by[0].B, self.by[1].dB, np.array(xi)) 
+		return np.concatenate((dsx, dsy)) 
+
+	def CalcPhysDivShape(self, trans, xi):
+		ds = self.CalcDivShape(xi)
+		return 1/trans.Jacobian(xi)*ds 
+

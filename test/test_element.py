@@ -13,6 +13,22 @@ def test_nodal(btype, p):
 		b[i] = 1
 		assert(el.CalcShape(el.nodes[i,:])==approx(b))
 
+@pytest.mark.parametrize('p1', [1,2,3,4])
+@pytest.mark.parametrize('p2', [1,2,3,4])
+@pytest.mark.parametrize('bt1', [LagrangeBasis, LobattoBasis, LegendreBasis])
+@pytest.mark.parametrize('bt2', [LagrangeBasis, LobattoBasis, LegendreBasis])
+def test_nodal_mix(bt1, bt2, p1, p2):
+	b1 = bt1(p1)
+	b2 = bt2(p2)
+	N = b1.N*b2.N 
+	for i in range(b2.N):
+		for j in range(b1.N):
+			idx = j + i*b1.N 
+			b = np.zeros(N)
+			b[idx] = 1 
+			s = PolyVal2D(b1.B, b2.B, np.array([b1.ip[j], b2.ip[i]]))
+			assert(s==approx(b))
+
 def test_gshape():
 	el = Element(LagrangeBasis, 1)
 	gs = .25*np.array([[-1,1,-1,1], [-1,-1,1,1]])

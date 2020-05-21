@@ -57,30 +57,32 @@ static PyObject* _polyval2D(PyObject* self, PyObject* args) {
 	PyArrayObject *Bx, *By, *X; 
 	if (!PyArg_ParseTuple(args, "OOO", &Bx, &By, &X)) return NULL; 
 
-	int nb = PyArray_DIM(Bx, 1); 
+	int nb[2] = {PyArray_DIM(Bx, 1), PyArray_DIM(By, 1)};  
 	int nc[2] = {PyArray_DIM(Bx, 0), PyArray_DIM(By, 0)};  
 
 	double *Bxp = PyArray_DATA(Bx); 
 	double *Byp = PyArray_DATA(By); 
 	double *Xp = PyArray_DATA(X); 
-	npy_intp dims = {nb*nb}; 
-	double *sx = malloc(sizeof(double)*nb); 
-	double *sy = malloc(sizeof(double)*nb); 
-	for (int i=0; i<nb; i++) {
+	npy_intp dims = nb[0]*nb[1]; 
+	double *sx = malloc(sizeof(double)*nb[0]); 
+	double *sy = malloc(sizeof(double)*nb[1]); 
+	for (int i=0; i<nb[0]; i++) {
 		sx[i] = Bxp[i]; 
 		for (int j=1; j<nc[0]; j++) {
-			sx[i] = sx[i]*Xp[0] + Bxp[j*nb + i]; 
+			sx[i] = sx[i]*Xp[0] + Bxp[j*nb[0] + i]; 
 		}
+	}
+	for (int i=0; i<nb[1]; i++) {
 		sy[i] = Byp[i]; 
 		for (int j=1; j<nc[1]; j++) {
-			sy[i] = sy[i]*Xp[1] + Byp[j*nb + i]; 
+			sy[i] = sy[i]*Xp[1] + Byp[j*nb[1] + i]; 
 		}
 	}
 
 	double *shape = malloc(sizeof(double)*dims); 
-	for (int i=0; i<nb; i++) {
-		for (int j=0; j<nb; j++) {
-			int ind = j + i*nb; 
+	for (int i=0; i<nb[1]; i++) {
+		for (int j=0; j<nb[0]; j++) {
+			int ind = j + i*nb[0]; 
 			shape[ind] = sx[j] * sy[i]; 
 		}
 	}

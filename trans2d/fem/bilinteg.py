@@ -107,6 +107,20 @@ def VectorMassIntegrator(el, trans, c, qorder):
 	elmat[el.Nn:,el.Nn:] = M 
 	return elmat 
 
+def VectorFEMassIntegrator(el, trans, c, qorder):
+	ip, w = quadrature.Get(qorder)
+	elmat = np.zeros((el.Nn, el.Nn))
+	for n in range(len(w)):
+		vs = el.CalcVShape(ip[n])
+		F = trans.F(ip[n]) 
+		G = linalg.TransMult(F, F) 
+		vshat = np.dot(G, vs)
+		X = trans.Transform(ip[n])
+		linalg.AddTransMult(w[n]/trans.Jacobian(ip[n])*c(X), 
+			vs, vshat, 1., elmat)
+
+	return elmat 
+
 def VectorMassIntegratorRowSum(el, trans, c, qorder):
 	M = VectorMassIntegrator(el, trans, c, qorder)
 	for i in range(M.shape[0]):
@@ -138,6 +152,17 @@ def MixDivIntegrator(el1, el2, trans, c, qorder):
 		s = el1.CalcShape(ip[n])
 		div = el2.CalcPhysGradShape(trans, ip[n]).flatten()
 		linalg.AddOuter(trans.Jacobian(ip[n])*w[n]*c, s, div, elmat)
+
+	return elmat 
+
+def VectorFEDivIntegrator(el1, el2, trans, c, qorder):
+	elmat = np.zeros((el1.Nn, el2.Nn))
+	ip, w = quadrature.Get(qorder)
+
+	for n in range(len(w)):
+		s = el1.CalcShape(ip[n])
+		div = el2.CalcDivShape(ip[n])
+		linalg.AddOuter(w[n]*c, s, div, elmat) 
 
 	return elmat 
 
@@ -246,7 +271,7 @@ def AssembleLOR(space, integrator, c, qorder):
 		trans = space.mesh.trans[e]
 		for i in range(p):
 			for j in range(p):
-				nid = np.array([i*(p+1)+j, i*(p+1)+j+1, (i+1)*(p+1)+j+1, (i+1)*(p+1)+j])
+				nid = np.array([i*(p+1)+j, i*(p+1)+j+1, (i+1)*(p+1)+j, (i+1)*(p+1)+j+1])
 				box = np.zeros((len(nid), 2))
 				for n in range(len(nid)):
 					box[n] = trans.Transform(space.el.nodes[nid[n]])
@@ -254,7 +279,6 @@ def AssembleLOR(space, integrator, c, qorder):
 				rtrans = type(trans)(box) 
 				elmat = integrator(el, rtrans, c, qorder)
 				dofid = nid.copy()
-				dofid[[2,3]] = nid[[3,2]] # swap to match different ordering of mesh and fespace 
 				if (space.vdim>1):
 					dofid = np.append(dofid, dofid+(p+1)**2) 
 				dofs = space.dofs[e,dofid] 

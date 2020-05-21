@@ -30,7 +30,7 @@ def test_nodal_mix(p1, p2):
 def test_gshape():
 	el = Element(LagrangeBasis, 1)
 	gs = .25*np.array([[-1,1,-1,1], [-1,-1,1,1]])
-	assert(el.CalcGradShape([0,0])==approx(gs))
+	assert(el.CalcGradShape([0.,0])==approx(gs))
 
 @pytest.mark.parametrize('p', [1, 2, 3, 4])
 @pytest.mark.parametrize('btype', [LagrangeBasis, LobattoBasis, LegendreBasis])

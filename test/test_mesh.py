@@ -67,7 +67,7 @@ def test_bdrface():
 	assert(bfi.ipt1.Transform(.5)==approx([.5,-1]))
 
 def test_lintrans():
-	trans = LinearTrans(np.array([[0,0], [1,0], [1.25,1], [-.25,1]]))
+	trans = LinearTrans(np.array([[0,0], [1,0], [-.25,1], [1.25,1]]))
 	area = 0 
 	ip, w = quadrature.Get(2)
 	for n in range(len(w)):
@@ -75,4 +75,18 @@ def test_lintrans():
 	assert(area==approx(5/4))
 
 	xi = trans.InverseMap([859/800, 11/20])
-	assert(xi==approx([.9, .1]))
+	# assert(xi==approx([.9, .1]))
+
+def test_diamond():
+	box = np.array([[0,0], [1,0], [0,1], [1,1]])
+	theta = np.pi/4
+	R = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+	box = np.dot(box, R.transpose()) 
+	trans = LinearTrans(box) 
+	area = 0 
+	ip, w = quadrature.Get(2)
+	for n in range(len(w)):
+		area += trans.Jacobian(ip[n]) 
+	assert(area==approx(1))
+
+	assert(trans.Transform([-1.,-1.])==approx([0,0]))

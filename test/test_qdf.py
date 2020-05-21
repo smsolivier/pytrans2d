@@ -14,7 +14,7 @@ def test_isotropic():
 	qdf.Compute(psi) 
 
 	trans = mesh.trans[0]
-	E = qdf.EvalTensor(trans, [0,0])
+	E = qdf.EvalTensor(trans, [0.,0])
 	assert(E==pytest.approx(np.eye(2)/3))
 
 	fi = mesh.iface[0]

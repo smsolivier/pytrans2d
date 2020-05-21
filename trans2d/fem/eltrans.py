@@ -10,10 +10,10 @@ class AffineTrans:
 	def __init__(self, box, elno=-1):
 		self.box = box 
 		self.ElNo = elno 
-		self.hx = box[1,0] - box[0,0] 
-		self.hy = box[2,1] - box[1,1] 
+		self.hx = np.sqrt((box[1,0] - box[0,0])**2 + (box[1,1] - box[0,1])**2)
+		self.hy = np.sqrt((box[3,1] - box[1,1])**2 + (box[3,0] - box[1,0])**2)
 		self.h = np.array([self.hx/2, self.hy/2])
-		self.c = np.array([box[1,0] + box[0,0], box[2,1] + box[1,1]])*.5
+		self.c = np.array([box[1,0] + box[0,0], box[3,1] + box[1,1]])*.5
 
 		self.j = self.hx*self.hy/4 
 		self.f = np.array([[self.hx/2, 0], [0, self.hy/2]])
@@ -47,8 +47,6 @@ class AffineTrans:
 class LinearTrans:
 	def __init__(self, box, elno=-1):
 		self.box = box
-		# convert to node ordering expected by LagrangeBasis
-		self.box[[2,3]] = self.box[[3,2]] 
 		self.ElNo = elno
 		self.basis = LagrangeBasis(1)
 
@@ -74,7 +72,7 @@ class LinearTrans:
 		return np.linalg.det(self.F(xi))
 
 	def InverseMap(self, x, niter=20, tol=1e-14):
-		xi = np.array([0,0])
+		xi = np.array([0.,0.])
 		for n in range(niter):
 			xi0 = xi.copy()
 			xi = np.dot(self.Finv(xi0), (x - self.Transform(xi0))) + xi0 

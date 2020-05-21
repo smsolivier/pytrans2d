@@ -63,6 +63,12 @@ static PyObject* _polyval2D(PyObject* self, PyObject* args) {
 	double *Bxp = PyArray_DATA(Bx); 
 	double *Byp = PyArray_DATA(By); 
 	double *Xp = PyArray_DATA(X); 
+	int xtype = PyArray_TYPE(X); 
+	if (PyArray_DESCR(X)->kind=='i') {
+		PyErr_SetString(PyExc_RuntimeError, 
+			"must pass double instead of int for X argument of PolyVal2D"); 
+		return NULL; 
+	}
 	npy_intp dims = nb[0]*nb[1]; 
 	double *sx = malloc(sizeof(double)*nb[0]); 
 	double *sy = malloc(sizeof(double)*nb[1]); 

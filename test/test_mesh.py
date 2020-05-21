@@ -38,10 +38,26 @@ def test_facetrans():
 		l += ft.Jacobian(ip[n])*w[n]
 	assert(l==approx(1/3))
 
+	ft = mesh.iface[1].face
+	assert(ft.Transform(0)==approx([1/6,1/3]))
+	assert(ft.Jacobian(0)==approx(1/6))
+	assert(ft.Normal(0)==approx([0,1]))
+	ip, w = quadrature.Get1D(1)
+	l = 0
+	for n in range(len(w)):
+		l += ft.Jacobian(ip[n])*w[n]
+	assert(l==approx(1/3))
+
 	ipt1 = mesh.iface[0].ipt1 
 	ipt2 = mesh.iface[0].ipt2 
 	assert(ipt1.Transform(.5)==approx([1,.5]))
 	assert(ipt2.Transform(.5)==approx([-1,.5]))
+	assert(mesh.iface[0].fno==0)
+
+	ipt1 = mesh.iface[1].ipt1 
+	ipt2 = mesh.iface[1].ipt2 
+	assert(ipt1.Transform(.5)==approx([-.5,1]))
+	assert(ipt2.Transform(.5)==approx([-.5,-1]))
 	assert(mesh.iface[0].fno==0)
 
 def test_bdrface():

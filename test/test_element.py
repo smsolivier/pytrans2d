@@ -15,11 +15,9 @@ def test_nodal(btype, p):
 
 @pytest.mark.parametrize('p1', [1,2,3,4])
 @pytest.mark.parametrize('p2', [1,2,3,4])
-@pytest.mark.parametrize('bt1', [LagrangeBasis, LobattoBasis, LegendreBasis])
-@pytest.mark.parametrize('bt2', [LagrangeBasis, LobattoBasis, LegendreBasis])
-def test_nodal_mix(bt1, bt2, p1, p2):
-	b1 = bt1(p1)
-	b2 = bt2(p2)
+def test_nodal_mix(p1, p2):
+	b1 = LobattoBasis(p1)
+	b2 = LegendreBasis(p2)
 	N = b1.N*b2.N 
 	for i in range(b2.N):
 		for j in range(b1.N):

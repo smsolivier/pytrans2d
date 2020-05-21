@@ -20,6 +20,9 @@ class Element:
 		s = self.CalcShape(xi)
 		return np.block([[s, np.zeros(s.shape)], [np.zeros(s.shape), s]])
 
+	def CalcPhysVShape(self, trans, xi):
+		return self.CalcVShape(xi) 
+
 	def CalcGradShape(self, xi):
 		gshape = np.zeros((2,self.Nn))
 		gshape[0] = PolyVal2D(self.basis.dB, self.basis.B, np.array(xi))
@@ -80,7 +83,7 @@ class RTElement:
 
 	def CalcPhysVShape(self, trans, xi):
 		vs = self.CalcVShape(xi) 
-		return 1/trans.Jacobian(ip[n])*np.dot(trans.F(xi), vs) 
+		return 1/trans.Jacobian(xi)*np.dot(trans.F(xi), vs) 
 
 	def CalcDivShape(self, xi):
 		dsx = PolyVal2D(self.bx[0].dB, self.bx[1].B, np.array(xi)) 

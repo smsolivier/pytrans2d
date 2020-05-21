@@ -77,6 +77,22 @@ def mixdiffusion(Ne, p):
 	J.data = x[:J_space.Nu]
 	return phi.L2Error(phi_ex, 2*p+2)
 
+def rtdiffusion(Ne, p):
+	mesh = RectMesh(Ne, Ne)
+	rt = RTSpace(mesh, p)
+	l2 = L2Space(mesh, LegendreBasis, p) 
+	M = Assemble(rt, VectorFEMassIntegrator, lambda x: -1, 2*(p+2)+1)
+	D = MixAssemble(l2, rt, VectorFEDivIntegrator, 1, 2*(p+1)+1)
+	Q = lambda x: 2*np.pi**2*np.sin(np.pi*x[0])*np.sin(np.pi*x[1])
+	f = AssembleRHS(l2, DomainIntegrator, Q, 2*(p+1)+1)
+
+	A = sp.bmat([[M, D.transpose()], [D, None]]).tocsc()
+	rhs = np.concatenate((np.zeros(rt.Nu), f))
+	x = spla.spsolve(A, rhs) 
+	T = GridFunction(l2)
+	T.data = x[rt.Nu:]
+	return T.L2Error(lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*(p+1)+2)
+
 def convection(Ne, p):
 	mesh = RectMesh(Ne, Ne)
 	space = L2Space(mesh, LegendreBasis, p)
@@ -206,7 +222,7 @@ def vef(Ne, p):
 
 Ne = 3
 @pytest.mark.parametrize('p', [1, 2, 3, 4])
-@pytest.mark.parametrize('solver', [h1diffusion, mixdiffusion, convection, dgdiffusion, 
+@pytest.mark.parametrize('solver', [h1diffusion, mixdiffusion, rtdiffusion, convection, dgdiffusion, 
 	sn_direct, sn_sweep, p1, p1sa, vef])
 def test_ooa(solver, p):
 	E1 = solver(Ne, p)

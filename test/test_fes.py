@@ -95,3 +95,8 @@ def test_lor_mixdiff(p):
 	print('phi ooa = {:.3f} ({:.3e}, {:.3e})'.format(ooa[0], E1[0], E2[0]))
 	print('J ooa = {:.3f} ({:.3e}, {:.3e})'.format(ooa[1], E1[1], E2[1]))
 	assert(ooa[0] == pytest.approx(1, abs=.1))
+
+def test_rt():
+	mesh = RectMesh(2,2)
+	space = RTSpace(mesh, 2) 
+	assert(space.Nu==84)

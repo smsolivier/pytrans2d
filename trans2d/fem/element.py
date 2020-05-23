@@ -41,7 +41,7 @@ class Element:
 		pgs = self.CalcPhysGradShape(trans, xi)
 		return np.block([[pgs, np.zeros(pgs.shape)], [np.zeros(pgs.shape), pgs]])
 
-	def Interpolate(self, xi, u):
+	def Interpolate(self, trans, xi, u):
 		if (len(u)==self.Nn):
 			return np.dot(self.CalcShape(xi), u)
 		else:
@@ -72,12 +72,14 @@ class RTElement:
 				self.nodes[idx,0] = self.by[0].ip[j] 
 				self.nodes[idx,1] = self.by[1].ip[i] 
 
+		self.basis = basis.RTBasis(p) 
+
 	def CalcShape(self, xi):
 		raise NotImplementedError('this is vector FE')
 
 	def CalcVShape(self, xi):
-		sx = PolyVal2D(self.bx[0].B, self.bx[1].B, np.array(xi)) 
-		sy = PolyVal2D(self.by[0].B, self.by[1].B, np.array(xi)) 
+		sx = np.polynomial.polynomial.polyval2d(xi[0], xi[1], self.basis.Cx)
+		sy = np.polynomial.polynomial.polyval2d(xi[0], xi[1], self.basis.Cy)
 		return np.block([[sx, np.zeros(len(sx))], 
 			[np.zeros(len(sy)), sy]])
 
@@ -86,13 +88,13 @@ class RTElement:
 		return 1/trans.Jacobian(xi)*np.dot(trans.F(xi), vs) 
 
 	def CalcDivShape(self, xi):
-		dsx = PolyVal2D(self.bx[0].dB, self.bx[1].B, np.array(xi)) 
-		dsy = PolyVal2D(self.by[0].B, self.by[1].dB, np.array(xi)) 
+		dsx = np.polynomial.polynomial.polyval2d(xi[0], xi[1], self.basis.dCx)
+		dsy = np.polynomial.polynomial.polyval2d(xi[0], xi[1], self.basis.dCy)
 		return np.concatenate((dsx, dsy)) 
 
 	def CalcPhysDivShape(self, trans, xi):
 		ds = self.CalcDivShape(xi)
 		return 1/trans.Jacobian(xi)*ds 
 
-	def Interpolate(self, xi, u):
-		return np.dot(self.CalcVShape(xi), u) 
+	def Interpolate(self, trans, xi, u):
+		return np.dot(self.CalcPhysVShape(trans, xi), u) 

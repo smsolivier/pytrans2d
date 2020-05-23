@@ -148,10 +148,10 @@ class RTSpace:
 		xdof = np.zeros((self.Ne, Nn), dtype=int)
 		ydof = np.zeros((self.Ne, Nn), dtype=int)
 
-		n_on_facex = [np.array([]), np.arange(p+1, Nn+1, p+2), 
-			np.array([]), np.arange(0, p*(p+2)+1, p+2)]
+		n_on_facex = [np.array([]), np.arange(p+1,Nn,p+2), 
+			np.array([]), np.arange(0,Nn,p+2)]
 		n_on_facey = [np.arange(0,p+1), np.array([]), 
-			np.arange(p*(p+2)+1, Nn), np.array([])]
+			np.arange((p+1)**2, Nn), np.array([])]
 
 		cx = 0
 		cy = 0 

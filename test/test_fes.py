@@ -100,3 +100,15 @@ def test_rt():
 	mesh = RectMesh(2,2)
 	space = RTSpace(mesh, LobattoBasis, LegendreBasis, 2) 
 	assert(space.Nu==84)
+
+	mesh = RectMesh(2,1) 
+	space = RTSpace(mesh, LobattoBasis, LegendreBasis, 0) 
+	q = GridFunction(space) 
+	q.data = np.array([1., 5/2, 4, 0, -1, 0, -1]) 
+
+	vs = space.el.CalcPhysVShape(mesh.trans[0], [0,0])
+	assert(np.dot(vs, q.GetDof(0))==pytest.approx(np.array([1.75, -1])))
+
+	vs = space.el.CalcPhysVShape(mesh.trans[1], [0,0]) 
+	X = mesh.trans[1].Transform([0,0]) 
+	assert(np.dot(vs, q.GetDof(1))==pytest.approx(np.array([1+9/4,-1])))

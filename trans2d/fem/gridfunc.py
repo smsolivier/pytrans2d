@@ -13,7 +13,7 @@ class GridFunction:
 		self.data[self.space.dofs[e]] = vals 
 
 	def Interpolate(self, e, xi):
-		return self.space.el.Interpolate(xi, self.GetDof(e))
+		return self.space.el.Interpolate(self.space.mesh.trans[e], xi, self.GetDof(e))
 
 	def InterpolateGradient(self, e, xi):
 		trans = self.space.mesh.trans[e]

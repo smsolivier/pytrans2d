@@ -1,5 +1,6 @@
 import numpy as np
 import quadpy 
+from ..ext import linalg
 
 def GenLobatto(p):
 	N = p+1 
@@ -60,3 +61,95 @@ class LobattoBasis(BasisCollection):
 class LagrangeBasis(BasisCollection):
 	def __init__(self, p):
 		BasisCollection.__init__(self, p, GenLagrange)
+
+class RTBasis:
+	def __init__(self, p):
+		self.p = p 
+		self.N = 2*(p+1)*(p+2) 
+		from .quadrature import quadrature 
+		from ..ext.linalg import AddOuter
+		qorder = 2*(p+1)+1 
+		ip, w = quadrature.Get1D(qorder)
+		N = (p+1)*(p+2)
+		yrows = [] 
+		xrows = []
+
+		ntb = p+1 
+		eq = np.zeros((ntb, N))
+		for n in range(len(w)):
+			s = np.outer(ip[n]**np.arange(p+1), (-1)**np.arange(p+2)).flatten()
+			r = ip[n]**np.arange(0,p+1)
+			AddOuter(w[n], r, s, eq) 
+		yrows.append(eq) 
+
+		eq = np.zeros((ntb, N))
+		for n in range(len(w)):
+			s = np.outer(ip[n]**np.arange(p+1), 1**np.arange(p+2)).flatten()
+			r = ip[n]**np.arange(0,p+1)
+			AddOuter(w[n], r, s, eq) 
+		yrows.append(eq) 
+
+		eq = np.zeros((ntb, N))
+		for n in range(len(w)):
+			s = np.outer((-1)**np.arange(p+2), ip[n]**np.arange(p+1)).flatten()
+			r = ip[n]**np.arange(0,p+1)
+			AddOuter(w[n], r, s, eq) 
+		xrows.append(eq) 
+
+		eq = np.zeros((ntb, N))
+		for n in range(len(w)):
+			s = np.outer(1**np.arange(p+2), ip[n]**np.arange(p+1)).flatten()
+			r = ip[n]**np.arange(0,p+1)
+			AddOuter(w[n], r, s, eq) 
+		xrows.append(eq) 
+
+		if (p>0):
+			ip, w = quadrature.Get(qorder)
+			ntb = (p+1)*p
+			eq = np.zeros((ntb, N))
+			for n in range(len(w)):
+				s = np.outer(ip[n][0]**np.arange(p+1), ip[n][1]**np.arange(p+2)).flatten()
+				r = np.outer(ip[n][0]**np.arange(p+1), ip[n][1]**np.arange(p)).flatten()
+				AddOuter(w[n], r, s, eq) 
+			yrows.append(eq) 
+
+			eq = np.zeros((ntb, N))
+			for n in range(len(w)):
+				s = np.outer(ip[n][0]**np.arange(p+2), ip[n][1]**np.arange(p+1)).flatten()
+				r = np.outer(ip[n][0]**np.arange(p), ip[n][1]**np.arange(p+1)).flatten()
+				AddOuter(w[n], r, s, eq) 
+			xrows.append(eq) 
+
+		Ay = np.vstack(yrows) 
+		Py = np.zeros((N,N))
+		for i in range(p+1):
+			Py[i,i] = 1 
+		for i in range(p+1):
+			Py[i+p+1,(p+1)**2+i] = 1 
+		if (p>0):
+			for i in range((p+1)*p):
+				Py[i+2*(p+1),p+1+i] = 1 
+
+		cy = np.linalg.solve(Ay, Py).transpose()
+		self.Cy = np.zeros((p+1, p+2, N))
+
+		Ax = np.vstack(xrows)
+		Px = np.zeros((N,N))
+		for i in range(p+1):
+			Px[i,i*(p+2)] = 1 
+		for i in range(p+1):
+			Px[p+1+i,p+1+(p+2)*i] = 1 
+		if (p>0):
+			for i in range(p+1):
+				for j in range(p):
+					idx = j + i*p
+					Px[idx+2*(p+1),1+i*(p+2)+j] = 1 
+		cx = np.linalg.solve(Ax, Px).transpose()
+		self.Cx = np.zeros((p+2, p+1, N))
+
+		for i in range(N):
+			self.Cy[:,:,i] = cy[i,:].reshape((p+1,p+2))
+			self.Cx[:,:,i] = cx[i,:].reshape((p+2,p+1))
+
+		self.dCy = np.polynomial.polynomial.polyder(self.Cy, axis=1) 
+		self.dCx = np.polynomial.polynomial.polyder(self.Cx, axis=0)

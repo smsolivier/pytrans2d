@@ -191,3 +191,17 @@ def test_block():
 	for i in range(2):
 		for j in range(2):
 			assert(spla.norm(Mt1[i,j] - Mt3[i,j])<1e-15)
+
+def test_rt0div():
+	rt = RTElement(LobattoBasis, LegendreBasis, 0) 
+	l2 = Element(LegendreBasis, 0) 
+
+	D = VectorFEDivIntegrator(l2, rt, trans, 1, 3) 
+	Dex = np.array([[-1,1,-1,1]])
+	assert(D==pytest.approx(Dex))
+
+def test_rt0mass():
+	rt = RTElement(LobattoBasis, LegendreBasis, 0) 
+	M = VectorFEMassIntegrator(rt, trans, lambda x: 1, 3) 
+	Mex = np.array([[1/3, 1/6, 0, 0], [1/6, 1/3, 0, 0], [0, 0, 1/3, 1/6], [0, 0, 1/6, 1/3]])
+	assert(M==pytest.approx(Mex))

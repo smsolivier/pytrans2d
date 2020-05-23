@@ -148,10 +148,7 @@ class RTSpace:
 		xdof = np.zeros((self.Ne, Nn), dtype=int)
 		ydof = np.zeros((self.Ne, Nn), dtype=int)
 
-		n_on_facex = [np.array([]), np.arange(p+1,Nn,p+2), 
-			np.array([]), np.arange(0,Nn,p+2)]
-		n_on_facey = [np.arange(0,p+1), np.array([]), 
-			np.arange((p+1)**2, Nn), np.array([])]
+		n_on_face = [np.arange(0,p+1), np.arange(p+1,Nn,p+2), np.arange((p+1)**2, Nn), np.arange(0,Nn,p+2)]
 
 		cx = 0
 		cy = 0 
@@ -170,12 +167,14 @@ class RTSpace:
 				tovis = neigh[np.argwhere(vis[neigh]==True)[:,0]]
 				for e in tovis:
 					f1, f2 = self.mesh.GetOrientation(v.index, e)
+					if (f1%2!=f2%2):
+						raise RuntimeError('mesh not oriented properly')
 					if (f1%2==0): # y face 
-						dofs = ydof[e][n_on_facey[f2]]
-						newy[n_on_facey[f1]] = dofs 
+						dofs = ydof[e][n_on_face[f2]]
+						newy[n_on_face[f1]] = dofs 
 					else:
-						dofs = xdof[e][n_on_facex[f2]]
-						newx[n_on_facex[f1]] = dofs 
+						dofs = xdof[e][n_on_face[f2]]
+						newx[n_on_face[f1]] = dofs 
 
 				for i in range(len(newx)):
 					if (newx[i]<0):

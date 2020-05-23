@@ -75,7 +75,7 @@ def test_lintrans():
 	assert(area==approx(5/4))
 
 	xi = trans.InverseMap([859/800, 11/20])
-	# assert(xi==approx([.9, .1]))
+	assert(xi==approx([.9, .1]))
 
 def test_diamond():
 	box = np.array([[0,0], [1,0], [0,1], [1,1]])
@@ -90,3 +90,4 @@ def test_diamond():
 	assert(area==approx(1))
 
 	assert(trans.Transform([-1.,-1.])==approx([0,0]))
+	assert(trans.Transform([0., 0.])==approx([0, np.sqrt(2)/2]))

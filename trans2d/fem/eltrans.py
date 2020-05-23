@@ -58,7 +58,8 @@ class LinearTrans:
 		gs = np.zeros((2, 4))
 		gs[0,:] = PolyVal2D(self.basis.dB, self.basis.B, np.array(xi))
 		gs[1,:] = PolyVal2D(self.basis.B, self.basis.dB, np.array(xi))
-		return linalg.Mult(1., gs, self.box) 
+		# hard copy required for linalg functions to avoid 'soft transpose'
+		return linalg.Mult(1., gs, self.box).transpose().copy(order='C')
 
 	def Finv(self, xi):
 		F = self.F(xi)
@@ -70,6 +71,15 @@ class LinearTrans:
 
 	def Jacobian(self, xi):
 		return np.linalg.det(self.F(xi))
+
+	def Area(self):
+		from .quadrature import quadrature 
+		ip, w = quadrature.Get(2)
+		area = 0
+		for n in range(len(w)):
+			area += self.Jacobian(ip[n])*w[n] 
+
+		return area 
 
 	def InverseMap(self, x, niter=20, tol=1e-14):
 		xi = np.array([0.,0.])

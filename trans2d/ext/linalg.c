@@ -2,6 +2,8 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h> 
 
+#define CHECK_FORTRAN
+
 static PyObject* _outer(PyObject* self, PyObject* args) {
 	PyArrayObject *v1, *v2; 
 	double alpha; 
@@ -48,6 +50,12 @@ static PyObject* _Mult(PyObject* self, PyObject* args) {
 	double alpha; 
 	if (!PyArg_ParseTuple(args, "dOO", &alpha, &A, &B)) return NULL; 
 
+	if (PyArray_IS_F_CONTIGUOUS(A) || PyArray_IS_F_CONTIGUOUS(B)) {
+		PyErr_SetString(PyExc_RuntimeError, 
+			"fortran array passed in"); 
+		return NULL; 
+	}
+
 	int m = PyArray_DIM(A, 0); 
 	int n = PyArray_DIM(A, 1); 
 	int p = PyArray_DIM(B, 1); 
@@ -73,6 +81,14 @@ static PyObject* _AddMult(PyObject* self, PyObject* args) {
 	double alpha, beta; 
 	if (!PyArg_ParseTuple(args, "dOOdO", &alpha, &A, &B, &beta, &C)) return NULL; 
 
+#ifdef CHECK_FORTRAN
+	if (PyArray_IS_F_CONTIGUOUS(A) || PyArray_IS_F_CONTIGUOUS(B)) {
+		PyErr_SetString(PyExc_RuntimeError, 
+			"fortran array passed in"); 
+		return NULL; 
+	}
+#endif
+
 	int m = PyArray_DIM(A, 0); 
 	int n = PyArray_DIM(A, 1); 
 	int p = PyArray_DIM(B, 1); 
@@ -95,6 +111,14 @@ static PyObject* _AddMult(PyObject* self, PyObject* args) {
 static PyObject* _TransMult(PyObject* self, PyObject* args) {
 	PyArrayObject *A, *B; 
 	if (!PyArg_ParseTuple(args, "OO", &A, &B)) return NULL; 
+
+#ifdef CHECK_FORTRAN
+	if (PyArray_IS_F_CONTIGUOUS(A) || PyArray_IS_F_CONTIGUOUS(B)) {
+		PyErr_SetString(PyExc_RuntimeError, 
+			"fortran array passed in"); 
+		return NULL; 
+	}
+#endif
 
 	int m = PyArray_DIM(A, 1); 
 	int n = PyArray_DIM(A, 0); 
@@ -119,6 +143,14 @@ static PyObject* _AddTransMult(PyObject* self, PyObject* args) {
 	PyArrayObject *A, *B, *C; 
 	double alpha, beta; 
 	if (!PyArg_ParseTuple(args, "dOOdO", &alpha, &A, &B, &beta, &C)) return NULL; 
+
+#ifdef CHECK_FORTRAN
+	if (PyArray_IS_F_CONTIGUOUS(A) || PyArray_IS_F_CONTIGUOUS(B)) {
+		PyErr_SetString(PyExc_RuntimeError, 
+			"fortran array passed in"); 
+		return NULL; 
+	}
+#endif
 
 	int m = PyArray_DIM(A, 1); 
 	int n = PyArray_DIM(A, 0); 

@@ -198,13 +198,16 @@ class AbstractMesh:
 			poly = Polygon(nodes, fill=False)
 			plt.gca().add_patch(poly)
 
-			xc = self.trans[e].Transform([0,0])
+			xc = self.trans[e].Transform([0.,0])
 			plt.annotate(str(e), xy=(xc[0], xc[1]), 
 				verticalalignment='center', horizontalalignment='center')
 
 		for n in range(self.nodes.shape[0]):
 			plt.annotate(str(n), xy=(self.nodes[n,0], self.nodes[n,1]), 
 				verticalalignment='bottom', horizontalalignment='left')
+
+		plt.xlim(np.min(self.nodes[:,0]), np.max(self.nodes[:,0]))
+		plt.ylim(np.min(self.nodes[:,1]), np.max(self.nodes[:,1]))
 
 class RectMesh(AbstractMesh): 
 	def __init__(self, Nx, Ny, xl=[0,0], xh=[1,1]):

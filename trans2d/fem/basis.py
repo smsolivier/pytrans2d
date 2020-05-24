@@ -151,5 +151,5 @@ class RTBasis:
 			self.Cy[:,:,i] = cy[i,:].reshape((p+1,p+2))
 			self.Cx[:,:,i] = cx[i,:].reshape((p+2,p+1))
 
-		self.dCy = np.polynomial.polynomial.polyder(self.Cy, axis=1) 
+		self.dCy = np.polynomial.polynomial.polyder(self.Cy, axis=1).copy(order='C')
 		self.dCx = np.polynomial.polynomial.polyder(self.Cx, axis=0)

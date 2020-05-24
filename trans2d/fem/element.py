@@ -1,5 +1,6 @@
 import numpy as np 
 from ..ext.horner import PolyVal2D
+from ..ext.horner import PolyValTP
 from ..ext import linalg 
 from . import basis 
 
@@ -78,8 +79,8 @@ class RTElement:
 		raise NotImplementedError('this is vector FE')
 
 	def CalcVShape(self, xi):
-		sx = np.polynomial.polynomial.polyval2d(xi[0], xi[1], self.basis.Cx)
-		sy = np.polynomial.polynomial.polyval2d(xi[0], xi[1], self.basis.Cy)
+		sx = PolyValTP(self.basis.Cx, np.array(xi))
+		sy = PolyValTP(self.basis.Cy, np.array(xi))
 		return np.block([[sx, np.zeros(len(sx))], 
 			[np.zeros(len(sy)), sy]])
 
@@ -88,8 +89,8 @@ class RTElement:
 		return 1/trans.Jacobian(xi)*np.dot(trans.F(xi), vs) 
 
 	def CalcDivShape(self, xi):
-		dsx = np.polynomial.polynomial.polyval2d(xi[0], xi[1], self.basis.dCx)
-		dsy = np.polynomial.polynomial.polyval2d(xi[0], xi[1], self.basis.dCy)
+		dsx = PolyValTP(self.basis.dCx, np.array(xi))
+		dsy = PolyValTP(self.basis.dCy, np.array(xi))
 		return np.concatenate((dsx, dsy)) 
 
 	def CalcPhysDivShape(self, trans, xi):

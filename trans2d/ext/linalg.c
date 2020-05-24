@@ -50,11 +50,13 @@ static PyObject* _Mult(PyObject* self, PyObject* args) {
 	double alpha; 
 	if (!PyArg_ParseTuple(args, "dOO", &alpha, &A, &B)) return NULL; 
 
+#ifdef CHECK_FORTRAN
 	if (PyArray_IS_F_CONTIGUOUS(A) || PyArray_IS_F_CONTIGUOUS(B)) {
 		PyErr_SetString(PyExc_RuntimeError, 
 			"fortran array passed in"); 
 		return NULL; 
 	}
+#endif
 
 	int m = PyArray_DIM(A, 0); 
 	int n = PyArray_DIM(A, 1); 

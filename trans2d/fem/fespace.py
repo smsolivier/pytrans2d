@@ -27,7 +27,7 @@ class FESpace:
 		plt.plot(self.nodes[:,0], self.nodes[:,1], 'o')
 		for n in range(self.nodes.shape[0]):
 			plt.annotate(str(n), xy=(self.nodes[n,0], self.nodes[n,1]), 
-				verticalalignment='bottom', horizontalalignment='left')
+				verticalalignment='bottom', horizontalalignment='left', usetex=False)
 
 class H1Space(FESpace):
 	def __init__(self, mesh, btype, p, vdim=1):
@@ -206,15 +206,18 @@ class RTSpace:
 		from matplotlib.patches import Polygon
 		from matplotlib.collections import PatchCollection
 		fig = plt.figure()
+		patches = []
 		for e in range(self.Ne):
 			nodes = self.mesh.nodes[self.mesh.ele[e]]
 			nodes[[2,3]] = nodes[[3,2]]
 			poly = Polygon(nodes, fill=False)
-			plt.gca().add_patch(poly)
+			patches.append(poly)
 
+		col = PatchCollection(patches, match_original=True) 
+		plt.gca().add_collection(col) 
 		half = int(self.Nu/2)
 		plt.plot(self.nodes[:half,0], self.nodes[:half,1], 'o')
 		plt.plot(self.nodes[half:,0], self.nodes[half:,1], 'x')
 		for n in range(self.nodes.shape[0]):
 			plt.annotate(str(n), xy=(self.nodes[n,0], self.nodes[n,1]), 
-				verticalalignment='bottom', horizontalalignment='left')
+				verticalalignment='bottom', horizontalalignment='left', usetex=False)

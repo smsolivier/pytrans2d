@@ -200,11 +200,11 @@ class AbstractMesh:
 
 			xc = self.trans[e].Transform([0.,0])
 			plt.annotate(str(e), xy=(xc[0], xc[1]), 
-				verticalalignment='center', horizontalalignment='center')
+				verticalalignment='center', horizontalalignment='center', usetex=False)
 
 		for n in range(self.nodes.shape[0]):
 			plt.annotate(str(n), xy=(self.nodes[n,0], self.nodes[n,1]), 
-				verticalalignment='bottom', horizontalalignment='left')
+				verticalalignment='bottom', horizontalalignment='left', usetex=False)
 
 		plt.xlim(np.min(self.nodes[:,0]), np.max(self.nodes[:,0]))
 		plt.ylim(np.min(self.nodes[:,1]), np.max(self.nodes[:,1]))

@@ -79,8 +79,10 @@ class RTElement:
 		raise NotImplementedError('this is vector FE')
 
 	def CalcVShape(self, xi):
-		sx = PolyValTP(self.basis.Cx, np.array(xi))
-		sy = PolyValTP(self.basis.Cy, np.array(xi))
+		# sx = PolyValTP(self.basis.Cx, np.array(xi))
+		# sy = PolyValTP(self.basis.Cy, np.array(xi))
+		sx = PolyVal2D(self.bx[0].B, self.bx[1].B, np.array(xi))
+		sy = PolyVal2D(self.by[0].B, self.by[1].B, np.array(xi))
 		return np.block([[sx, np.zeros(len(sx))], 
 			[np.zeros(len(sy)), sy]])
 
@@ -89,8 +91,10 @@ class RTElement:
 		return 1/trans.Jacobian(xi)*np.dot(trans.F(xi), vs) 
 
 	def CalcDivShape(self, xi):
-		dsx = PolyValTP(self.basis.dCx, np.array(xi))
-		dsy = PolyValTP(self.basis.dCy, np.array(xi))
+		# dsx = PolyValTP(self.basis.dCx, np.array(xi))
+		# dsy = PolyValTP(self.basis.dCy, np.array(xi))
+		dsx = PolyVal2D(self.bx[0].dB, self.bx[1].B, np.array(xi))
+		dsy = PolyVal2D(self.by[0].B, self.by[1].dB, np.array(xi))
 		return np.concatenate((dsx, dsy)) 
 
 	def CalcPhysDivShape(self, trans, xi):

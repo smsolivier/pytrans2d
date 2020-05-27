@@ -195,6 +195,12 @@ class RTSpace:
 
 		self.Nu = cx + cy 
 
+		self.bnodes = [] 
+		for f in self.mesh.bface:
+			self.bnodes += self.dofs[f.ElNo1, n_on_face[f.f1] + (Nn if f.f1%2==0 else 0)].tolist()
+
+		self.bnodes = np.unique(self.bnodes)
+
 		self.nodes = np.zeros((self.Nu, 2))
 		for e in range(self.Ne):
 			trans = self.mesh.trans[e] 

@@ -20,10 +20,10 @@ if (len(sys.argv)>4):
 
 ri = .5
 ro = 1
-theta = np.linspace(0, np.pi, Nt+1)
+theta = np.linspace(0, 2*np.pi, Nt+2)[:-1]
 R = np.linspace(ri, ro, Nr+1)
 Nn = len(theta)*len(R)
-Ne = (Nt)*Nr 
+Ne = (Nt+1)*Nr 
 
 nodes = np.zeros((Nn, 2))
 nodes[:,0] = np.outer(R, np.cos(theta)).flatten()
@@ -39,13 +39,13 @@ for r in range(Nr):
 		ele[e,3] = t + (r+1)*(Nt+1)  
 		e += 1 	
 
-# for r in range(Nr):
-# 	t = Nt-1
-# 	ele[e,1] = Nt + r*(Nt+1) 
-# 	ele[e,3] = Nt + (r+1)*(Nt+1)
-# 	ele[e,0] = r*(Nt+1)
-# 	ele[e,2] = (r+1)*(Nt+1)
-# 	e += 1 
+for r in range(Nr):
+	t = Nt-1
+	ele[e,1] = Nt + r*(Nt+1) 
+	ele[e,3] = Nt + (r+1)*(Nt+1)
+	ele[e,0] = r*(Nt+1)
+	ele[e,2] = (r+1)*(Nt+1)
+	e += 1 
 mesh = AbstractMesh(nodes, ele, mp)
 for e in range(Ne):
 	area = mesh.trans[e].Area()
@@ -55,14 +55,25 @@ rt = RTSpace(mesh, LobattoBasis, LegendreBasis, p)
 l2 = L2Space(mesh, LegendreBasis, p) 
 print('rt Nu = {}\nl2 Nu = {}\ntotal Nu = {}'.format(rt.Nu, l2.Nu, rt.Nu+l2.Nu))
 
+bnodes = []
+for bn in rt.bnodes:
+	node = rt.nodes[bn] 
+	r = np.linalg.norm(node)
+	if (r < ri+1e-3):
+		bnodes.append(bn)
+
 qorder = 2*(p+1)+1
-M = Assemble(rt, VectorFEMassIntegrator, lambda x: -1, qorder)
+M = Assemble(rt, VectorFEMassIntegrator, lambda x: 1, qorder)
 D = MixAssemble(l2, rt, VectorFEDivIntegrator, 1, qorder) 
-Q = lambda x: 1 
+Q = lambda x: 0
 f = AssembleRHS(l2, DomainIntegrator, Q, qorder) 
 
-A = sp.bmat([[M, D.transpose()], [D, None]]).tocsc()
+A = sp.bmat([[M, -D.transpose()], [D, None]]).tolil()
+A[bnodes,:] = 0 
+A[bnodes,bnodes] = 1 
+A = A.tocsc()
 rhs = np.concatenate((np.zeros(rt.Nu), f))
+rhs[bnodes] = 1 
 x = spla.spsolve(A, rhs) 
 
 T = GridFunction(l2)

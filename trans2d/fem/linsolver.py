@@ -91,6 +91,29 @@ class GaussSeidel(IterativeSolver):
 
 		return x 
 
+class SymGaussSeidel(IterativeSolver):
+	def __init__(self, itol, maxiter, LOUD=False):
+		IterativeSolver.__init__(self, itol, maxiter, LOUD)
+
+	def Solve(self, A, b):
+		self.it = 0 
+		L1 = sp.tril(A,0).tocsr()
+		U1 = sp.triu(A,1).tocsr()
+		L2 = sp.tril(A,-1).tocsr()
+		U2 = sp.triu(A,0).tocsr()
+		x = np.zeros(A.shape[0])
+		for n in range(self.maxiter):
+			x0 = x.copy()
+			x = spla.spsolve_triangular(L1, b - U1*x0, lower=True)
+			x = spla.spsolve_triangular(U2, b - L2*x, lower=False)
+			norm = np.linalg.norm(x - x0)
+			if (norm < self.itol):
+				break 
+
+			self.Callback(norm)
+
+		return x 
+
 class Jacobi(IterativeSolver):
 	def __init__(self, itol, maxiter, LOUD=False):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)

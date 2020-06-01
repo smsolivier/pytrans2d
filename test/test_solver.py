@@ -54,3 +54,21 @@ def test_blockldu():
 	res = np.linalg.norm(A*x - rhs)
 	assert(res<1e-10)
 
+@pytest.mark.parametrize('solver', [Jacobi, GaussSeidel, SymGaussSeidel])
+def test_smooth(solver):
+	N = 10 
+	A = sp.lil_matrix((N,N))
+	A[0,0] = 1 
+	A[-1,-1] = 1 
+	for i in range(1,N-1):
+		A[i,i] = 2 
+		A[i,i-1] = A[i,i+1] = -1 
+
+	rhs = np.ones(N)
+	rhs[0] = rhs[-1] = 0 
+
+	s = solver(1e-10, 10000, False)
+	x = s.Solve(A.tocsc(), rhs)
+	assert(s.IsConverged())
+	r = np.linalg.norm(A*x - rhs)
+	assert(r<1e-9)

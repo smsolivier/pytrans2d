@@ -215,17 +215,28 @@ class BlockDiag(IterativeSolver):
 		return x 
 
 class AMGSolver(IterativeSolver):
-	def __init__(self, itol, maxiter, inner=1, LOUD=False):
+	def __init__(self, itol, maxiter, inner=1, smoother=None, LOUD=False):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)
 		self.inner = inner 
-		if (self.inner>1):
-			raise NotImplementedError('have to change amg.aspreconditioner to get more than 1 vcycle/iteration')
+		self.smoother = smoother 
+		if (self.smoother!=None):
+			self.smoother.space = 6*' '
 
 	def Solve(self, A, Ahat, b):
 		self.it = 0
 		amg = pyamg.ruge_stuben_solver(Ahat.tocsr())
+		# lu = spla.splu(Ahat)
+		def prec(x):
+			y = amg.solve(x, maxiter=self.inner)
+			# y = lu.solve(x)
+			if (self.smoother!=None):
+				y += self.smoother.Solve(A, x)
+
+			return y 
+
+		P = spla.LinearOperator(A.shape, prec)
 		self.start = time.time()
-		x, info = spla.gmres(A.tocsc(), b, M=amg.aspreconditioner(cycle='V'), callback=self.Callback, 
+		x, info = spla.gmres(A.tocsc(), b, M=P, callback=self.Callback, 
 			callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)
 		self.Cleanup(info)
 

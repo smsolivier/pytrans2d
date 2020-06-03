@@ -162,12 +162,12 @@ class AbstractMesh:
 			for key in point:
 				data = point[key].flatten()
 				if (len(data)==4*self.Ne): # scalar data 
-					f.write('SCALARS {} float\n'.format(key))
+					f.write('SCALARS {} float\n'.format(key.replace(' ', '_')))
 					f.write('LOOKUP_TABLE default\n')
 					for n in range(len(data)):
 						f.write('{}\n'.format(data[n])) 
 				elif (len(data)==8*self.Ne): # vector data 
-					f.write('VECTORS {} float\n'.format(key))
+					f.write('VECTORS {} float\n'.format(key.replace(' ', '_')))
 					half = int(len(data)/2)
 					for n in range(half):
 						f.write('{} {} 0\n'.format(data[n], data[n+half]))
@@ -179,12 +179,12 @@ class AbstractMesh:
 			for key in cell:
 				data = cell[key] 
 				if (len(data.shape)==1):
-					f.write('SCALARS {} float\n'.format(key)) 
+					f.write('SCALARS {} float\n'.format(key.replace(' ', '_'))) 
 					f.write('LOOKUP_TABLE default\n')
 					for n in range(len(data)):
 						f.write('{}\n'.format(data[n])) 
 				else:
-					f.write('VECTORS {} float\n'.format(key))
+					f.write('VECTORS {} float\n'.format(key.replace(' ', '_')))
 					for n in range(data.shape[0]):
 						f.write('{} {} 0\n'.format(data[n,0], data[n,1]))
 

@@ -22,7 +22,7 @@ def test_amg():
 	f[space.bnodes] = 0 
 
 	T = GridFunction(space)
-	solver = AMGSolver(1e-12, 20, 1, False)
+	solver = AMGSolver(1e-12, 20, 1, None, False)
 	T.data = solver.Solve(A, A, f)
 
 	res = np.linalg.norm(A*T.data - f)

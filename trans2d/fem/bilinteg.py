@@ -121,6 +121,17 @@ def VectorFEMassIntegrator(el, trans, c, qorder):
 
 	return elmat 
 
+def VectorFEMassIntegratorRowSum(el, trans, c, qorder):
+	M = VectorFEMassIntegrator(el, trans, c, qorder)
+	for i in range(M.shape[0]):
+		tmp = 0 
+		for j in range(M.shape[1]):
+			tmp += M[i,j]
+			M[i,j] = 0
+		M[i,i] = tmp 
+
+	return M 	
+
 def VectorMassIntegratorRowSum(el, trans, c, qorder):
 	M = VectorMassIntegrator(el, trans, c, qorder)
 	for i in range(M.shape[0]):

@@ -72,16 +72,22 @@ class BlockLDU(IterativeSolver):
 class GaussSeidel(IterativeSolver):
 	def __init__(self, itol, maxiter, LOUD=False):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)
+		self.A = None 
 
-	def Solve(self, A, b):
+	def SetOperator(self, A):
+		self.A = A 
+		self.L = sp.tril(A,0).tocsr()
+		self.U = sp.triu(A,1).tocsr()		
+
+	def Solve(self, b):
+		if (self.A==None):
+			raise RuntimeError('must call SetOperator before Solve')
+
 		self.it = 0
-		L = sp.tril(A,0).tocsr()
-		U = sp.triu(A,1).tocsr()
-
-		x = np.zeros(A.shape[0])
+		x = np.zeros(self.A.shape[0])
 		for n in range(self.maxiter):
 			x0 = x.copy()
-			x = spla.spsolve_triangular(L, b - U*x0)
+			x = spla.spsolve_triangular(self.L, b - self.U*x0, lower=True)
 
 			norm = np.linalg.norm(x - x0)
 			if (norm < self.itol):
@@ -94,18 +100,24 @@ class GaussSeidel(IterativeSolver):
 class SymGaussSeidel(IterativeSolver):
 	def __init__(self, itol, maxiter, LOUD=False):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)
+		self.A = None
 
-	def Solve(self, A, b):
+	def SetOperator(self, A):
+		self.A = A 
+		self.L1 = sp.tril(A,0).tocsr()
+		self.U1 = sp.triu(A,1).tocsr()
+		self.L2 = sp.tril(A,-1).tocsr()
+		self.U2 = sp.triu(A,0).tocsr()
+
+	def Solve(self, b):
+		if (self.A == None):
+			raise RuntimeError('must call SetOperator before Solve')
 		self.it = 0 
-		L1 = sp.tril(A,0).tocsr()
-		U1 = sp.triu(A,1).tocsr()
-		L2 = sp.tril(A,-1).tocsr()
-		U2 = sp.triu(A,0).tocsr()
-		x = np.zeros(A.shape[0])
+		x = np.zeros(self.A.shape[0])
 		for n in range(self.maxiter):
 			x0 = x.copy()
-			x = spla.spsolve_triangular(L1, b - U1*x0, lower=True)
-			x = spla.spsolve_triangular(U2, b - L2*x, lower=False)
+			x = spla.spsolve_triangular(self.L1, b - self.U1*x0, lower=True)
+			x = spla.spsolve_triangular(self.U2, b - self.L2*x, lower=False)
 			norm = np.linalg.norm(x - x0)
 			if (norm < self.itol):
 				break 
@@ -117,16 +129,21 @@ class SymGaussSeidel(IterativeSolver):
 class Jacobi(IterativeSolver):
 	def __init__(self, itol, maxiter, LOUD=False):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)
+		self.A = None
 
-	def Solve(self, A, b):
+	def SetOperator(self, A):
+		self.A = A 
+		self.D = A.diagonal()
+		self.Aoff = A - sp.diags(self.D)
+
+	def Solve(self, b):
+		if (self.A==None):
+			raise RuntimeError('must call SetOperator before Solve')
 		self.it = 0
-		D = A.diagonal()
-		Aoff = A - sp.diags(D)
-
-		x = np.zeros(A.shape[0])
+		x = np.zeros(self.A.shape[0])
 		for n in range(self.maxiter):
 			x0 = x.copy()
-			x = (b - Aoff*x0)/D 
+			x = (b - self.Aoff*x0)/self.D 
 
 			norm = np.linalg.norm(x - x0)
 			if (norm < self.itol):
@@ -226,11 +243,13 @@ class AMGSolver(IterativeSolver):
 		self.it = 0
 		amg = pyamg.ruge_stuben_solver(Ahat.tocsr())
 		# lu = spla.splu(Ahat)
+		if (self.smoother!=None):
+			self.smoother.SetOperator(A)
 		def prec(x):
 			y = amg.solve(x, maxiter=self.inner)
 			# y = lu.solve(x)
 			if (self.smoother!=None):
-				y += self.smoother.Solve(A, x)
+				y += self.smoother.Solve(x)
 
 			return y 
 

@@ -68,7 +68,8 @@ def test_smooth(solver):
 	rhs[0] = rhs[-1] = 0 
 
 	s = solver(1e-10, 10000, False)
-	x = s.Solve(A.tocsc(), rhs)
+	s.SetOperator(A.tocsr())
+	x = s.Solve(rhs)
 	assert(s.IsConverged())
 	r = np.linalg.norm(A*x - rhs)
 	assert(r<1e-9)

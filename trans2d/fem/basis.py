@@ -7,20 +7,20 @@ def GenLobatto(p):
 	rule = quadpy.line_segment.gauss_lobatto(int(N))
 	# ip = np.around(rule.points, 14) 
 	ip = rule.points 
-	B, dB = SolveVandermonde(ip)
-	return ip, B, dB
+	V, B, dB = SolveVandermonde(ip)
+	return ip, B, dB, V
 
 def GenLagrange(p):
 	N = p+1 
 	ip = np.linspace(-1,1,N)
-	B, dB = SolveVandermonde(ip)
-	return ip, B, dB 
+	V, B, dB = SolveVandermonde(ip)
+	return ip, B, dB, V 
 
 def GenLegendre(p):
 	N = p+1 
 	ip, w = np.polynomial.legendre.leggauss(N)
-	B, dB = SolveVandermonde(ip)
-	return ip, B, dB 
+	V, B, dB = SolveVandermonde(ip)
+	return ip, B, dB, V 
 
 def SolveVandermonde(ip):
 	N = len(ip) 
@@ -30,11 +30,7 @@ def SolveVandermonde(ip):
 		for j in range(N):
 			A[i,j] = ip[i]**j 
 
-	for k in range(N):
-		b = np.zeros(N)
-		b[k] = 1 
-		coef[k,:] = np.linalg.solve(A, b) 
-
+	coef = np.linalg.solve(A.transpose(), np.eye(N))
 	B = np.zeros((N,N))
 	dB = np.zeros((N-1,N))
 
@@ -42,13 +38,13 @@ def SolveVandermonde(ip):
 		B[:,i] = coef[i,::-1]
 		dB[:,i] = np.polyder(B[:,i])
 
-	return B, dB 
+	return A, B, dB 
 
 class BasisCollection:
 	def __init__(self, p, genfun):
 		self.p = p 
 		self.N = self.p+1 
-		self.ip, self.B, self.dB = genfun(p) 
+		self.ip, self.B, self.dB, self.V = genfun(p) 
 
 class LegendreBasis(BasisCollection):
 	def __init__(self, p):
@@ -61,6 +57,56 @@ class LobattoBasis(BasisCollection):
 class LagrangeBasis(BasisCollection):
 	def __init__(self, p):
 		BasisCollection.__init__(self, p, GenLagrange)
+
+class IntervalModal:
+	def __init__(self, p, closed):
+		lob = closed(p+1)
+		self.p = p 
+		N = p+1
+		self.V = np.zeros((N,N))
+		from .quadrature import quadrature
+		from . import mesh 
+		ip, w = quadrature.Get(2*p+1)
+
+		self.V = np.zeros((N**2, N**2))
+		for i in range(N):
+			for j in range(N):
+				rtrans = mesh.AffineTrans(np.array([
+					[lob.ip[j], lob.ip[i]], 
+					[lob.ip[j+1], lob.ip[i]], 
+					[lob.ip[j], lob.ip[i+1]], 
+					[lob.ip[j+1], lob.ip[i+1]]
+					]))
+				s = np.zeros(N**2)
+				for n in range(len(w)):
+					xi = rtrans.Transform(ip[n]) 
+					s += w[n] * np.outer(xi[0]**np.arange(N), xi[1]**np.arange(N)).flatten() * rtrans.Jacobian(ip[n]) 
+
+				self.V[:,j+i*N] = s 
+
+		B = np.linalg.solve(self.V, np.eye(N**2))
+		self.B = np.zeros((N,N,N**2))
+		for i in range(N**2):
+			self.B[:,:,i] = B[i,:].reshape((N,N))
+
+class MomentBasis:
+	def __init__(self, basis):
+		self.p = basis.p 
+		N = self.p + 1
+		self.V = np.zeros((N,N))
+		from .quadrature import quadrature 
+		from ..ext.horner import PolyVal
+		ip, w = quadrature.Get1D(2*self.p+1)
+		for n in range(len(w)):
+			self.V += np.outer(ip[n]**np.arange(N), PolyVal(basis.B, ip[n])) * w[n] 
+
+		coef = np.linalg.solve(self.V, np.eye(N))
+		self.B = np.zeros((N,N))
+		self.dB = np.zeros((N-1,N))
+
+		for i in range(N):
+			self.B[:,i] = coef[i,::-1]
+			self.dB[:,i] = np.polyder(self.B[:,i])
 
 class RTBasis:
 	def __init__(self, p):

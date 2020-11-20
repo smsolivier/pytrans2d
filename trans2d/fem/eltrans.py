@@ -10,18 +10,17 @@ class AffineTrans:
 	def __init__(self, box, elno=-1):
 		self.box = box 
 		self.ElNo = elno 
-		self.hx = np.sqrt((box[1,0] - box[0,0])**2 + (box[1,1] - box[0,1])**2)
-		self.hy = np.sqrt((box[3,1] - box[1,1])**2 + (box[3,0] - box[1,0])**2)
-		self.h = np.array([self.hx/2, self.hy/2])
-		self.c = np.array([box[1,0] + box[0,0], box[3,1] + box[1,1]])*.5
-
-		self.j = self.hx*self.hy/4 
-		self.f = np.array([[self.hx/2, 0], [0, self.hy/2]])
-		self.finv = np.array([[2/self.hx, 0], [0, 2/self.hy]])
+		x = self.box[:,0]
+		y = self.box[:,1]
+		self.f = np.array([[-x[0]+x[1]-x[2]+x[3], -x[0]-x[1]+x[2]+x[3]],
+			[-y[0]+y[1]-y[2]+y[3], -y[0]-y[1]+y[2]+y[3]]])/4
+		self.j = np.linalg.det(self.f)
+		self.finv = np.linalg.inv(self.f)
 		self.finvT = self.finv.transpose()
+		self.c = np.array([np.sum(x), np.sum(y)])/4
 
 	def Transform(self, xi):
-		return self.c + self.h*xi 
+		return self.f@xi + self.c
 
 	def Jacobian(self, xi):
 		return self.j
@@ -43,6 +42,23 @@ class AffineTrans:
 
 	def InverseMap(self, x, niter=20, tol=1e-14):
 		return np.dot(self.finv, x - self.c)
+
+	def Intersect(self, ip, d, niter=1):
+		dhat = self.finv@d 
+		t = np.zeros(4) - 10
+		if (dhat[0]!=0):
+			t[1] = (1-ip[0])/dhat[0]		
+			t[3] = (-1-ip[0])/dhat[0]
+		if (dhat[1]!=0):		
+			t[0] = (-1-ip[1])/dhat[1]
+			t[2] = (1-ip[1])/dhat[1]
+		for i in range(4):
+			if (t[i]>=0):
+				xi = ip + t[i]*dhat 
+				if (xi[0]>=-1. and xi[0]<=1. and xi[1]>=-1. and xi[1]<=1.):
+					return xi 
+
+		raise RuntimeError('intersection not found')
 
 class LinearTrans:
 	def __init__(self, box, elno=-1):
@@ -94,6 +110,42 @@ class LinearTrans:
 			warnings.warn('inverse map not converged. final tol = {:.3e}'.format(norm), utils.ToleranceWarning)
 
 		return xi 
+
+	def Intersect(self, ip, d, niter=20, tol=1e-14):
+		raise NotImplementedError 
+
+		# def RayTrace(trans, ip, Omega):
+		# 	found = False 
+		# 	IP = trans.Transform(ip) 
+		# 	for i in range(2):
+		# 		xi = np.zeros(2)
+		# 		xi[i] = -1 
+		# 		for n in range(25):
+		# 			F = trans.F(xi)
+		# 			x = trans.Transform(xi) 
+		# 			rhs = IP - x + np.dot(F, xi)
+		# 			rhs = np.append(rhs, -1) 
+		# 			A = np.zeros((3,3))
+		# 			A[:2,:2] = F 
+		# 			A[:2,-1] = Omega 
+		# 			A[-1,i] = 1 
+
+		# 			u = np.linalg.solve(A, rhs) 
+		# 			xi = u[:2] 
+		# 			t = u[-1] 
+		# 			norm = np.linalg.norm(trans.Transform(xi) - (IP - t*Omega))
+		# 			if (norm<1e-8):
+		# 				break 
+
+		# 		if (xi[(i+1)%2] >= -1. and xi[(i+1)%2] <= 1. and t>=0 and norm<1e-7):
+		# 			found = True
+		# 			break 
+
+		# 	if not(found):
+		# 		raise RuntimeError('intersection not found. ip = ({:.2f},{:.2f}), J = {:.3f}'.format(
+		# 			ip[0], ip[1], trans.Jacobian(ip))) 
+
+		# 	return xi 	
 
 class AffineFaceTrans:
 	def __init__(self, line):

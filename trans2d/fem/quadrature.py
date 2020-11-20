@@ -30,6 +30,13 @@ class Quadrature:
 		assert(idx<self.pmax)
 		return self.ip_leg2d[idx], self.w_leg2d[idx]
 
+	def GetLumped(self, el):
+		from . import basis 
+		if (type(el.basis)==basis.LegendreBasis):
+			return self.ip_leg2d[el.p], self.w_leg2d[el.p]
+		else:
+			raise NotImplementedError('lumped integration of type ' + str(type(el.basis)) + ' not implemented')
+
 	def Get1D(self, p):
 		idx = math.ceil((p+1)/2)-1
 		assert(idx<self.pmax)

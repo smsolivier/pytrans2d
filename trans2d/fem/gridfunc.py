@@ -22,10 +22,15 @@ class GridFunction:
 	def Project(self, func):
 		for e in range(self.space.Ne):
 			trans = self.space.mesh.trans[e]
-			vals = np.zeros(self.space.el.Nn)
+			vals = np.zeros(self.space.el.Nn*self.space.vdim)
 			for i in range(self.space.el.Nn):
 				X = trans.Transform(self.space.el.nodes[i])
-				vals[i] = func(X)
+				if (self.space.vdim==1):
+					vals[i] = func(X)
+				else:
+					f = func(X)
+					for d in range(self.space.vdim):
+						vals[i+d*self.space.el.Nn] = f[d]
 
 			self.SetDof(e, vals)
 
@@ -79,6 +84,19 @@ class GridFunction:
 				l2 += np.dot(val, val) * w[n] * trans.Jacobian(ip[n]) 
 
 		return np.sqrt(l2) 
+
+	def L2NormDiv(self, qorder):
+		ip, w = quadrature.Get(qorder)
+		l2 = 0 
+		for e in range(self.space.Ne):
+			trans = self.space.mesh.trans[e] 
+			for n in range(len(w)):
+				dof = self.GetDof(e) 
+				pgs = self.space.el.CalcPhysGradShape(trans, ip[n]) 
+				div = np.dot(pgs.flatten(), dof)
+				l2 += div**2 * w[n] * trans.Jacobian(ip[n]) 
+
+		return np.sqrt(l2)
 
 	def ElementData(self):
 		if (self.space.vdim==1):

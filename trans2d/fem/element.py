@@ -8,6 +8,7 @@ class Element:
 	def __init__(self, btype, p):
 		self.basis = btype(p)
 		self.Nn = self.basis.N**2 
+		self.p = p 
 
 		X,Y = np.meshgrid(self.basis.ip, self.basis.ip) 
 		self.nodes = np.zeros((self.Nn, 2))
@@ -51,6 +52,20 @@ class Element:
 	def InterpolateGradient(self, trans, xi, u):
 		pgs = self.CalcPhysGradShape(trans, xi)
 		return np.dot(pgs, u) 
+
+	def Plot(self, trans, u, N=30):
+		xi1d = np.linspace(-1,1,N)
+		Xi,Eta = np.meshgrid(xi1d,xi1d)
+		X = np.zeros(Xi.shape)
+		Y = np.zeros(Eta.shape)
+		U = np.zeros(Xi.shape)
+		for i in range(N):
+			for j in range(N):
+				xi = np.array([Xi[i,j], Eta[i,j]])
+				U[i,j] = self.Interpolate(trans, xi, u)
+				X[i,j], Y[i,j] = trans.Transform(xi)
+
+		return X,Y,U 
 
 class RTElement:
 	def __init__(self, bc, bd, p):

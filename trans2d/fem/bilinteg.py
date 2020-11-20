@@ -76,6 +76,10 @@ def MassIntegrator(el, trans, c, qorder):
 
 	return elmat 
 
+def InverseMassIntegrator(el, trans, c, qorder):
+	M = MassIntegrator(el, trans, c, qorder)
+	return np.linalg.inv(M)
+
 def MassIntegratorRowSum(el, trans, c, qorder):
 	M = MassIntegrator(el, trans, c, qorder)
 	for i in range(M.shape[0]):
@@ -163,6 +167,16 @@ def MixDivIntegrator(el1, el2, trans, c, qorder):
 		s = el1.CalcShape(ip[n])
 		div = el2.CalcPhysGradShape(trans, ip[n]).flatten()
 		linalg.AddOuter(trans.Jacobian(ip[n])*w[n]*c, s, div, elmat)
+
+	return elmat 
+
+def DivDivIntegrator(el, trans, c, qorder):
+	elmat = np.zeros((el.Nn*2, el.Nn*2))
+	ip, w = quadrature.Get(qorder)
+
+	for n in range(len(w)):
+		div = el.CalcPhysGradShape(trans, ip[n]).flatten()
+		linalg.AddOuter(trans.Jacobian(ip[n])*w[n]*c, div, div, elmat)
 
 	return elmat 
 

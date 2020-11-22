@@ -55,7 +55,7 @@ class AffineTrans:
 		for i in range(4):
 			if (t[i]>=0):
 				xi = ip + t[i]*dhat 
-				if (xi[0]>=-1. and xi[0]<=1. and xi[1]>=-1. and xi[1]<=1.):
+				if (xi[0]>=-1.-1e-15 and xi[0]<=1.+1e-15 and xi[1]>=-1.-1e-15 and xi[1]<=1.+1e-15):
 					return xi 
 
 		raise RuntimeError('intersection not found')

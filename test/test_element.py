@@ -36,7 +36,7 @@ def test_gshape():
 @pytest.mark.parametrize('btype', [LagrangeBasis, LobattoBasis, LegendreBasis])
 def test_interpolate(btype, p):
 	el = Element(btype, p)
-	trans = AffineTrans(np.array([[0,0], [1,0], [1,1], [0,1]]))
+	trans = AffineTrans(np.array([[0,0], [1,0], [0,1], [1,1]]))
 	f = lambda x: 10*x[0] + 5*x[1] + x[0]*x[1] 
 	df = lambda x: np.array([10 + x[1], 5 + x[0]])
 
@@ -54,7 +54,7 @@ def test_interpolate(btype, p):
 @pytest.mark.parametrize('btype', [LagrangeBasis, LobattoBasis, LegendreBasis])
 def test_vinterpolate(btype, p):
 	el = Element(btype, p)
-	trans = AffineTrans(np.array([[0,0], [1,0], [1,1], [0,1]]))
+	trans = AffineTrans(np.array([[0,0], [1,0], [0,1], [1,1]]))
 	f = lambda x: [10*x[0] + x[1], 2*x[0] - x[1]]
 
 	u = np.zeros(2*el.Nn)

@@ -5,6 +5,12 @@
 
 #define CHECK_FORTRAN
 
+PyObject* SimpleNewOwnData(int nd, npy_intp const* dims, int typenum, void *data) {
+	PyObject *ret = PyArray_SimpleNewFromData(nd, dims, typenum, data); 
+	PyArray_ENABLEFLAGS(ret, NPY_ARRAY_OWNDATA); 
+	return ret; 
+}
+
 static PyObject* _polyval(PyObject* self, PyObject* args) {
 	PyArrayObject *B; 
 	double x; 
@@ -27,7 +33,7 @@ static PyObject* _polyval(PyObject* self, PyObject* args) {
 		}
 	}
 
-	return PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE, shape); 
+	return SimpleNewOwnData(1, &dims, NPY_DOUBLE, shape); 
 }
 
 static PyObject* _polyval_mult(PyObject* self, PyObject* args) {
@@ -52,7 +58,7 @@ static PyObject* _polyval_mult(PyObject* self, PyObject* args) {
 			}
 		}
 	}
-	return PyArray_SimpleNewFromData(2, &dims[0], NPY_DOUBLE, shape); 
+	return SimpleNewOwnData(2, &dims[0], NPY_DOUBLE, shape); 
 }
 
 static PyObject* _polyval2D(PyObject* self, PyObject* args) {
@@ -91,7 +97,7 @@ static PyObject* _polyval2D(PyObject* self, PyObject* args) {
 		}
 	}
 	free(sx); free(sy); 
-	return PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE, shape); 
+	return SimpleNewOwnData(1, &dims, NPY_DOUBLE, shape); 
 }
 
 static PyObject* _polyvaltp(PyObject *self, PyObject *args) {
@@ -156,7 +162,7 @@ static PyObject* _polyvaltp(PyObject *self, PyObject *args) {
 	}
 	free(d); 
 	npy_intp dims = nb; 
-	return PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE, s); 
+	return SimpleNewOwnData(1, &dims, NPY_DOUBLE, s); 
 }
 
 static PyMethodDef mainMethods[] = {

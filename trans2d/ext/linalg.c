@@ -1,8 +1,7 @@
 #include "Python.h"
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h> 
-
-#define CHECK_FORTRAN
+#include "utils.h"
 
 static PyObject* _outer(PyObject* self, PyObject* args) {
 	PyArrayObject *v1, *v2; 
@@ -21,7 +20,7 @@ static PyObject* _outer(PyObject* self, PyObject* args) {
 			mat[j+i*n] = alpha*pv1[i] * pv2[j]; 
 		}
 	}
-	return PyArray_SimpleNewFromData(2, &dims[0], NPY_DOUBLE, mat); 
+	return SimpleNewOwnData(2, &dims[0], NPY_DOUBLE, mat); 
 }
 
 static PyObject* _AddOuter(PyObject* self, PyObject* args) {
@@ -75,7 +74,7 @@ static PyObject* _Mult(PyObject* self, PyObject* args) {
 			c[j+i*p] *= alpha; 
 		}
 	}
-	return PyArray_SimpleNewFromData(2, &dims[0], NPY_DOUBLE, c); 
+	return SimpleNewOwnData(2, &dims[0], NPY_DOUBLE, c); 
 }
 
 static PyObject* _AddMult(PyObject* self, PyObject* args) {
@@ -138,7 +137,7 @@ static PyObject* _TransMult(PyObject* self, PyObject* args) {
 			}
 		}
 	}
-	return PyArray_SimpleNewFromData(2, &dims[0], NPY_DOUBLE, mat); 
+	return SimpleNewOwnData(2, &dims[0], NPY_DOUBLE, mat); 
 }
 
 static PyObject* _AddTransMult(PyObject* self, PyObject* args) {

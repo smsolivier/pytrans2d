@@ -100,16 +100,16 @@ def test_diamond():
 	assert(trans.Transform([-1.,-1.])==approx([0,0]))
 	assert(trans.Transform([0., 0.])==approx([0, np.sqrt(2)/2]))
 
-@pytest.mark.parametrize('TransType', [AffineTrans])
+@pytest.mark.parametrize('TransType', [AffineTrans, LinearTrans])
 def test_intersect(TransType):
-	box = np.array([[1,-1], [1,1], [-1,-1], [-1,1]])
+	box = np.array([[1.,-1], [1,1], [-1,-1], [-1,1]])
 	trans = TransType(box) 
-	x = trans.Transform(trans.Intersect([0,0], [-2,-1]))
+	x = trans.Transform(trans.Intersect([0.,0], np.array([-2,-1])))
 	assert(x==approx([-1.,-.5]))
 
-	box = np.array([[2,0], [2,1], [0,0], [0,1]])
+	box = np.array([[2.,0], [2,1], [0,0], [0,1]])
 	trans = TransType(box) 
-	x = trans.Transform(trans.Intersect([0,0], [-1.25,-1]))
+	x = trans.Transform(trans.Intersect([0.,0], np.array([-1.25,-1])))
 	assert(x==approx([3./8,0]))
 
 	theta = np.linspace(0, 2*np.pi, 50)
@@ -119,4 +119,4 @@ def test_intersect(TransType):
 	h = .1
 	box = np.array([[0,0], [h,0], [0,h], [h,h]])
 	trans = TransType(box)
-	trans.Intersect([.33998104,-.33998104], [-1,-.25])
+	trans.Intersect([.33998104,-.33998104], np.array([-1,-.25]))

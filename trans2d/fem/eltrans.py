@@ -1,5 +1,6 @@
 import numpy as np 
 import warnings 
+import logging
 
 from ..ext.horner import PolyVal2D
 from ..ext import linalg 
@@ -62,19 +63,33 @@ class AffineTrans:
 
 		raise RuntimeError('intersection not found')
 
-class LinearTrans:
+class ElementTrans:
 	def __init__(self, box, elno=-1):
 		self.box = box
 		self.ElNo = elno
-		p = int(np.sqrt(box.shape[0])-1)
-		self.basis = LagrangeBasis(p)
+		self.p = int(np.sqrt(box.shape[0])-1)
+		self.basis = LagrangeBasis(self.p)
+
+		# logging for transform back 
+		l = logging.getLogger('transform_back')
+		if (l.getEffectiveLevel()<=logging.INFO):
+			fh = logging.FileHandler('transform_back.txt', mode='w')
+			l.addHandler(fh)
+		self.tb_log = logging.getLogger('transform_back')
+
+		# logging for ray tracing 
+		l = logging.getLogger('ray_tracing')
+		if (l.getEffectiveLevel()<=logging.INFO):
+			fh = logging.FileHandler('ray_tracing.txt', mode='w')
+			l.addHandler(fh)
+		self.rt_log = logging.getLogger('ray_tracing')
 
 	def Transform(self, xi):
 		shape = PolyVal2D(self.basis.B, self.basis.B, np.array(xi))
 		return np.dot(shape, self.box)
 
 	def F(self, xi):
-		gs = np.zeros((2, 4))
+		gs = np.zeros((2, self.box.shape[0]))
 		gs[0,:] = PolyVal2D(self.basis.dB, self.basis.B, np.array(xi))
 		gs[1,:] = PolyVal2D(self.basis.B, self.basis.dB, np.array(xi))
 		# hard copy required for linalg functions to avoid 'soft transpose'
@@ -93,14 +108,14 @@ class LinearTrans:
 
 	def Area(self):
 		from .quadrature import quadrature 
-		ip, w = quadrature.Get(2)
+		ip, w = quadrature.Get(self.p)
 		area = 0
 		for n in range(len(w)):
 			area += self.Jacobian(ip[n])*w[n] 
 
 		return area 
 
-	def InverseMap(self, x, niter=20, tol=1e-14):
+	def InverseMap(self, x, niter=20, tol=1e-13):
 		xi = np.array([0.,0.])
 		for n in range(niter):
 			xi0 = xi.copy()
@@ -111,10 +126,10 @@ class LinearTrans:
 
 		if (norm>tol):
 			warnings.warn('inverse map not converged. final tol = {:.3e}'.format(norm), utils.ToleranceWarning)
-
+		self.tb_log.info('{} {:.3e}'.format(n, norm))
 		return xi 
 
-	def Intersect(self, ip, d, niter=20, tol=1e-8):
+	def Intersect(self, ip, d, niter=20, tol=1e-13):
 		found = False 
 		IP = self.Transform(ip)
 		for v in [1,-1]: 
@@ -138,18 +153,12 @@ class LinearTrans:
 					if (norm<tol):
 						break 
 
-				if (xi[(i+1)%2] >= -1.-1e-15 and xi[(i+1)%2] <= 1.+1e-15 and t>=0 and norm<tol):
-					found = True
-					break 
+				if (xi[(i+1)%2] >= -1.-1e-13 and xi[(i+1)%2] <= 1.+1e-13 and t>=0 and norm<tol):
+					self.rt_log.info('{} {:.3e}'.format(n, norm))
+					return xi 
 
-			if (found):
-				break 
-
-		if not(found):
-			raise RuntimeError('intersection not found. ip = ({:.2f},{:.2f}), J = {:.3f}'.format(
-				ip[0], ip[1], self.Jacobian(ip))) 
-
-		return xi 	
+		raise RuntimeError('intersection not found. ip = ({:.16f},{:.16f}), J = {:.3f}'.format(
+			ip[0], ip[1], self.Jacobian(ip))) 
 
 class AffineFaceTrans:
 	def __init__(self, line):

@@ -4,7 +4,7 @@ import numpy as np
 import igraph 
 import matplotlib.pyplot as plt 
 
-from .eltrans import AffineTrans, LinearTrans, AffineFaceTrans, FaceInfo
+from .eltrans import AffineTrans, ElementTrans, AffineFaceTrans, FaceInfo
 
 class AbstractMesh: 
 	def __init__(self, nodes, ele, order=0):
@@ -18,10 +18,8 @@ class AbstractMesh:
 		for e in range(self.Ne):
 			if (order==0):
 				self.trans.append(AffineTrans(self.nodes[self.ele[e]], e))
-			elif (order==1):
-				self.trans.append(LinearTrans(self.nodes[self.ele[e]], e))
 			else:
-				raise AttributeError('mesh order ' + str(order) + ' not defined') 
+				self.trans.append(ElementTrans(self.nodes[self.ele[e]], e))
 
 		# build graph 
 		els_per_node = [[] for i in range(self.Nn)]

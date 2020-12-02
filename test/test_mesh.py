@@ -67,7 +67,7 @@ def test_bdrface():
 	assert(face.Transform(.5)==approx([1/4,0]))
 	assert(bfi.ipt1.Transform(.5)==approx([.5,-1]))
 
-@pytest.mark.parametrize('TransType', [AffineTrans, LinearTrans])
+@pytest.mark.parametrize('TransType', [AffineTrans, ElementTrans])
 def test_rotate(TransType):
 	box = np.array([[1.,-1], [1,1], [-1,-1], [-1,1]])
 	trans = TransType(box)
@@ -75,7 +75,7 @@ def test_rotate(TransType):
 	assert(trans.Transform([.25,0])==approx([0,.25]))
 
 def test_lintrans():
-	trans = LinearTrans(np.array([[0,0], [1,0], [-.25,1], [1.25,1]]))
+	trans = ElementTrans(np.array([[0,0], [1,0], [-.25,1], [1.25,1]]))
 	area = 0 
 	ip, w = quadrature.Get(2)
 	for n in range(len(w)):
@@ -90,7 +90,7 @@ def test_diamond():
 	theta = np.pi/4
 	R = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 	box = np.dot(box, R.transpose()) 
-	trans = LinearTrans(box) 
+	trans = ElementTrans(box) 
 	area = 0 
 	ip, w = quadrature.Get(2)
 	for n in range(len(w)):
@@ -100,7 +100,7 @@ def test_diamond():
 	assert(trans.Transform([-1.,-1.])==approx([0,0]))
 	assert(trans.Transform([0., 0.])==approx([0, np.sqrt(2)/2]))
 
-@pytest.mark.parametrize('TransType', [AffineTrans, LinearTrans])
+@pytest.mark.parametrize('TransType', [AffineTrans, ElementTrans])
 def test_intersect(TransType):
 	box = np.array([[1.,-1], [1,1], [-1,-1], [-1,1]])
 	trans = TransType(box) 
@@ -120,3 +120,14 @@ def test_intersect(TransType):
 	box = np.array([[0,0], [h,0], [0,h], [h,h]])
 	trans = TransType(box)
 	trans.Intersect([.33998104,-.33998104], np.array([-1,-.25]))
+
+def test_hotrans():
+	alpha = .1
+	X = np.array([[0.,0], [.5,alpha], [1,0], [0,.5], [.5,.5], [1,.5], [0,1], [.5,1-alpha], [1,1]])
+	trans = ElementTrans(X) 
+	assert(trans.Transform([0,-1.])==approx([.5,alpha]))
+	assert(trans.Transform([1.,1])==approx([1,1]))
+	assert(trans.Transform([0,0.])==approx([.5,.5]))
+	assert(trans.Transform([-1,0.])==approx([0,.5]))
+	assert(trans.Transform([-1,0.])==approx([0,.5]))
+	assert(trans.Area()==approx(1-2*alpha+2*alpha/3))

@@ -130,4 +130,4 @@ def test_hotrans():
 	assert(trans.Transform([0,0.])==approx([.5,.5]))
 	assert(trans.Transform([-1,0.])==approx([0,.5]))
 	assert(trans.Transform([-1,0.])==approx([0,.5]))
-	assert(trans.Area()==approx(1-2*alpha+2*alpha/3))
+	assert(trans.Area()==approx(1-4*alpha/3))

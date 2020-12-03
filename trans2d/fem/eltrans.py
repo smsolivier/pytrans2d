@@ -120,7 +120,7 @@ class ElementTrans:
 		for n in range(niter):
 			xi0 = xi.copy()
 			xi = np.dot(self.Finv(xi0), (x - self.Transform(xi0))) + xi0 
-			norm = np.linalg.norm(xi - xi0)
+			norm = np.linalg.norm(self.Transform(xi) - x)
 			if (norm < tol):
 				break 
 

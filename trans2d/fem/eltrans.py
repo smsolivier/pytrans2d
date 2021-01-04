@@ -108,7 +108,7 @@ class ElementTrans:
 
 	def Area(self):
 		from .quadrature import quadrature 
-		ip, w = quadrature.Get(self.p)
+		ip, w = quadrature.Get(2*self.p+1)
 		area = 0
 		for n in range(len(w)):
 			area += self.Jacobian(ip[n])*w[n] 
@@ -129,7 +129,7 @@ class ElementTrans:
 		self.tb_log.info('{} {:.3e}'.format(n, norm))
 		return xi 
 
-	def Intersect(self, ip, d, niter=20, tol=1e-13):
+	def Intersect(self, ip, d, niter=20, tol=1e-13, return_t=False):
 		found = False 
 		IP = self.Transform(ip)
 		for v in [1,-1]: 
@@ -155,7 +155,10 @@ class ElementTrans:
 
 				if (xi[(i+1)%2] >= -1.-1e-13 and xi[(i+1)%2] <= 1.+1e-13 and t>=0 and norm<tol):
 					self.rt_log.info('{} {:.3e}'.format(n, norm))
-					return xi 
+					if (return_t):
+						return xi, t
+					else:
+						return xi 
 
 		raise RuntimeError('intersection not found. ip = ({:.16f},{:.16f}), J = {:.3f}'.format(
 			ip[0], ip[1], self.Jacobian(ip))) 

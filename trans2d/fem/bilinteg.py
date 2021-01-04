@@ -111,6 +111,15 @@ def VectorMassIntegrator(el, trans, c, qorder):
 	elmat[el.Nn:,el.Nn:] = M 
 	return elmat 
 
+def InverseVectorMassIntegrator(el, trans, c, qorder):
+	elmat = np.zeros((2*el.Nn, 2*el.Nn))
+	ip, w = quadrature.Get(qorder)
+	M = MassIntegrator(el, trans, c, qorder)
+	Minv = np.linalg.inv(M) 
+	elmat[:el.Nn,:el.Nn] = Minv
+	elmat[el.Nn:,el.Nn:] = Minv 
+	return elmat 	
+
 def VectorFEMassIntegrator(el, trans, c, qorder):
 	ip, w = quadrature.Get(qorder)
 	elmat = np.zeros((el.Nn, el.Nn))

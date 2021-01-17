@@ -43,13 +43,15 @@ class BlockLDU(IterativeSolver):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)
 		self.inner = inner 
 
-	def Solve(self, A, B, C, D, Ainv, S, M, rhs):
+	def Solve(self, A, B, C, D, Ainv, S, M, rhs, P=None):
 		self.it = 0
 		CAinv = C*Ainv 
 		AinvB = Ainv*B 
 		amg = pyamg.ruge_stuben_solver(S.tocsr())
 
 		def Prec(b):
+			if (P!=None):
+				b = P.transpose()*b 
 			z1 = b[:A.shape[0]]
 			z2 = b[A.shape[0]:] - CAinv*z1
 
@@ -59,7 +61,11 @@ class BlockLDU(IterativeSolver):
 			x2 = y2.copy()
 			x1 = y1 - AinvB*x2 
 
-			return np.concatenate((x1, x2))
+			s = np.concatenate((x1, x2))
+			if (P!=None):
+				s = P*s 
+
+			return s
 
 		p2x2 = spla.LinearOperator(M.shape, Prec)
 		self.start = time.time()
@@ -109,11 +115,14 @@ class SymGaussSeidel(IterativeSolver):
 		self.L2 = sp.tril(A,-1).tocsr()
 		self.U2 = sp.triu(A,0).tocsr()
 
-	def Solve(self, b):
+	def Solve(self, b, x0=None):
 		if (self.A == None):
 			raise RuntimeError('must call SetOperator before Solve')
 		self.it = 0 
-		x = np.zeros(self.A.shape[0])
+		if (type(x0)==np.ndarray):
+			x = x0.copy() 
+		else:
+			x = np.zeros(self.A.shape[0])
 		for n in range(self.maxiter):
 			x0 = x.copy()
 			x = spla.spsolve_triangular(self.L1, b - self.U1*x0, lower=True)
@@ -236,27 +245,66 @@ class AMGSolver(IterativeSolver):
 		IterativeSolver.__init__(self, itol, maxiter, LOUD)
 		self.inner = inner 
 		self.smoother = smoother 
+		if (self.smoother==None):
+			self.smoother = ('gauss_seidel', {'sweep':'symmetric'})
+			# self.smoother.space = 6*' '
+
+	def Solve(self, A, Ahat, b, P=None):
+		self.it = 0
+		amg = pyamg.ruge_stuben_solver(Ahat.tocsr(), presmoother=self.smoother, postsmoother=self.smoother)
+		# if (self.smoother!=None):
+			# self.smoother.SetOperator(A)
+		def prec(x):
+			if (P!=None):
+				x = P.transpose()*x 
+			y = amg.solve(x, maxiter=self.inner)
+			# if (self.smoother!=None):
+				# y = self.smoother.Solve(y)
+
+			if (P!=None):
+				y = P*y 	
+
+			return y 
+
+		Prec = spla.LinearOperator(A.shape, prec)
+		# self.start = time.time()
+		x, info = spla.gmres(A.tocsc(), b, x0=np.zeros(A.shape[0]), M=Prec, callback=self.Callback, 
+			callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)
+		# x, info = pyamg.krylov.fgmres(A.tocsc(), b, tol=self.itol, maxiter=A.shape[0], 
+			# M=Prec, callback=self.Callback)
+		self.Cleanup(info)
+
+		return x
+
+class LUSolver(IterativeSolver):
+	def __init__(self, itol, maxiter, smoother=None, LOUD=False):
+		IterativeSolver.__init__(self, itol, maxiter, LOUD)
+		self.smoother = smoother
 		if (self.smoother!=None):
 			self.smoother.space = 6*' '
 
-	def Solve(self, A, Ahat, b):
-		self.it = 0
-		amg = pyamg.ruge_stuben_solver(Ahat.tocsr())
-		# lu = spla.splu(Ahat)
+	def Solve(self, A, Ahat, b, proj=None):
+		self.it = 0 
+		lu = spla.splu(Ahat)
 		if (self.smoother!=None):
 			self.smoother.SetOperator(A)
 		def prec(x):
-			y = amg.solve(x, maxiter=self.inner)
-			# y = lu.solve(x)
+			if (proj!=None):
+				x = proj.T*x 
+			y = lu.solve(x)
 			if (self.smoother!=None):
-				y += self.smoother.Solve(x)
+				y = self.smoother.Solve(y) 
+			if (proj!=None):
+				y = proj*y 
 
 			return y 
 
 		P = spla.LinearOperator(A.shape, prec)
 		self.start = time.time()
-		x, info = spla.gmres(A.tocsc(), b, M=P, callback=self.Callback, 
-			callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)
+		# x, info = spla.gmres(A.tocsc(), b, M=P, callback=self.Callback, 
+			# callback_type='legacy', tol=self.itol, atol=0, maxiter=self.maxiter, restart=None)
+		x, info = pyamg.krylov.gmres(A.tocsc(), b, M=P, callback=self.Callback, tol=self.itol, maxiter=A.shape[0])
+		# x, info = spla.cg(A.tocsr(), b, M=P, callback=self.Callback, tol=self.itol, atol=0, maxiter=self.maxiter)
 		self.Cleanup(info)
 
 		return x

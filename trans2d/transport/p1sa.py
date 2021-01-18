@@ -72,7 +72,9 @@ def MixJumpVAvgIntegrator(el1, el2, face, c, qorder):
 		a[:2*el2[0].Nn] = np.dot(nor, vs1)
 		a[2*el2[0].Nn:] = np.dot(nor, vs2)
 
-		linalg.AddOuter(.5*face.face.Jacobian(ip[n])*c*w[n], j, a, elmat)
+		# bfac = .5
+		bfac = 1 if face.boundary else .5 
+		linalg.AddOuter(bfac*face.face.Jacobian(ip[n])*c*w[n], j, a, elmat)
 
 	return elmat 
 
@@ -116,7 +118,9 @@ def VectorJumpAvgIntegrator(el1, el2, face, c, qorder):
 		a[:el2[0].Nn] = s1 
 		a[el2[0].Nn:] = s2 
 
-		linalg.AddOuter(.5*face.face.Jacobian(ip[n])*w[n]*c, j, a, elmat)
+		# not sure why this needs to be .5 on bdr faces 
+		bfac = .5
+		linalg.AddOuter(bfac*face.face.Jacobian(ip[n])*w[n]*c, j, a, elmat)
 
 	return elmat 
 

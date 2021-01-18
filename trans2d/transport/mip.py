@@ -37,9 +37,9 @@ def ModifiedInteriorPenaltyIntegrator(el1, el2, face, c, qorder):
 		kappa_ip = p*(p+1)/2*(c1/face.trans1.Length() + c2/face.trans2.Length())*1000
 		kappa = max(.25, kappa_ip)
 		linalg.AddOuter(kappa*alpha, j, j, elmat)
-		M = linalg.Outer(.5*alpha, j, a)
-		sym = .5*(M + M.transpose())
-		elmat += sym * (-1 if face.boundary else 1)
+		M = linalg.Outer((1 if face.boundary else .5)*alpha, j, a)
+		sym = M + M.transpose()
+		elmat -= sym 
 	return elmat 
 
 class MIP(sn.Sn):

@@ -220,10 +220,27 @@ def vef(Ne, p):
 
 	return phi.L2Error(phi_ex, 2*p+2)	
 
+def ldgdiffusion(Ne, p):
+	mesh = RectMesh(Ne, Ne)
+	sfes = L2Space(mesh, LegendreBasis, p, 1)
+	vfes = L2Space(mesh, LegendreBasis, p, 2) 
+
+	Minv = Assemble(vfes, InverseVectorMassIntegrator, lambda x: 1, 2*p+1) 
+	D = MixAssemble(sfes, vfes, WeakMixDivIntegrator, 1, 2*p+1) 
+	F = MixFaceAssembleAll(sfes, vfes, MixJumpVAvgIntegrator, 1, 2*p+1) 
+	P = FaceAssembleAll(sfes, PenaltyIntegrator, (p+1)**2, 2*p+1)
+	B = D+F 
+	f = AssembleRHS(sfes, DomainIntegrator, lambda x: -2*np.pi**2*np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*p+1)
+
+	S = P - B*Minv*B.transpose()
+	phi = GridFunction(sfes)
+	phi.data = spla.spsolve(S, f)
+	return phi.L2Error(lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*p+2)
+
 Ne = 3
 @pytest.mark.parametrize('p', [1, 2, 3, 4])
 @pytest.mark.parametrize('solver', [h1diffusion, mixdiffusion, rtdiffusion, convection, dgdiffusion, 
-	sn_direct, sn_sweep, p1, p1sa, vef])
+	sn_direct, sn_sweep, p1, p1sa, vef, ldgdiffusion])
 def test_ooa(solver, p):
 	E1 = solver(Ne, p)
 	E2 = solver(2*Ne, p)

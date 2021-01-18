@@ -261,8 +261,8 @@ def InteriorPenaltyIntegrator(el1, el2, face, c, qorder):
 		jac = face.face.Jacobian(ip[n])
 		alpha = jac*w[n] 
 		linalg.AddOuter(c*alpha/jac**2, j, j, elmat)
-		M = linalg.Outer(.5*alpha, j, a)
-		sym = .5*(M + M.transpose())
+		M = linalg.Outer((1 if face.boundary else .5)*alpha, j, a)
+		sym = M + M.transpose()
 		elmat -= sym 
 
 	return elmat 

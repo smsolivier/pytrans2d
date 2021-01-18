@@ -114,7 +114,7 @@ def dgdiffusion(Ne, p):
 	mesh = RectMesh(Ne, Ne)
 	space = L2Space(mesh, LegendreBasis, p) 
 
-	kappa = 100*10**p 
+	kappa = (p+1)**2 
 	K = Assemble(space, DiffusionIntegrator, lambda x: 1, 2*p+1)
 	F = FaceAssembleAll(space, InteriorPenaltyIntegrator, kappa, 2*p+1)
 	f = AssembleRHS(space, DomainIntegrator, lambda x: 2*np.pi**2*np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*p+1)

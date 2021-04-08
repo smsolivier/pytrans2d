@@ -108,9 +108,15 @@ class RTElement:
 		vs = self.CalcVShape(xi) 
 		return 1/trans.Jacobian(xi)*np.dot(trans.F(xi), vs) 
 
-	def CalcVGradShape(self, xi):
+	def CalcVGradShape(self, trans, xi):
 		gsx = np.zeros((2,int(self.Nn/2)))
 		gsy = np.zeros((2,int(self.Nn/2)))
+		H = trans.H(xi)
+		T1 = np.array([[H[1,1], H[1,2]], [-H[1,0], -H[1,1]]])
+		T2 = np.array([[-H[0,1], -H[0,2]], [H[0,0], H[0,1]]])
+		T = np.zeros((4,2))
+		T[:,0] = T1.flatten()
+		T[:,1] = T2.flatten()
 		if (self.modal):
 			gsx[0] = PolyValTP(self.basis.dCx, np.array(xi))
 			gsx[1] = PolyValTP(self.basis.dCx2, np.array(xi))
@@ -121,7 +127,8 @@ class RTElement:
 			gsx[1] = PolyVal2D(self.bx[0].B, self.bx[1].dB, np.array(xi))
 			gsy[0] = PolyVal2D(self.by[0].dB, self.by[1].B, np.array(xi))
 			gsy[1] = PolyVal2D(self.by[0].B, self.by[1].dB, np.array(xi))
-		return np.block([[gsx, np.zeros(gsx.shape)], [np.zeros(gsy.shape), gsy]])
+		vs = self.CalcPhysVShape(trans, xi) 
+		return -T@vs + np.block([[gsx, np.zeros(gsx.shape)], [np.zeros(gsy.shape), gsy]])
 
 	def CalcDivShape(self, xi):
 		if (self.modal):

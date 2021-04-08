@@ -260,3 +260,69 @@ def test_rtinterp():
 	vs = el.CalcVShape([-1,1])
 	val = np.dot(vs, dof)
 	assert(val==pytest.approx(np.array([-2,-2])))
+
+def test_rtgrad_affine():
+	h = .1
+	rot = np.array([[h,0], [h,h], [0,0], [0,h]])
+	trans = AffineTrans(rot) 
+	el = RTElement(LobattoBasis, LegendreBasis, 1)
+
+	v = lambda x: [x[0]**2,2*x[1]] 
+	u = np.zeros(el.Nn)
+	dof = int(el.Nn/2)
+	for i in range(dof):
+		xi = el.nodes[i]
+		ev = trans.Jacobian(xi)*trans.Finv(xi)@v(trans.Transform(xi))
+		u[i] = ev[0] 
+
+	for i in range(dof, el.Nn):
+		xi = el.nodes[i] 
+		ev = trans.Jacobian(xi)*trans.Finv(xi)@v(trans.Transform(xi))
+		u[i] = ev[1] 
+
+	xi = np.array([.25, -.1])
+	J = trans.Jacobian(xi)
+	Ghat = el.CalcVGradShape(trans, xi)@u
+	G = 1/J*trans.F(xi)@Ghat.reshape((2,2))@trans.Finv(xi)
+
+	x = trans.Transform(xi)
+	Gex = np.array([[2*x[0], 0], [0, 2]])
+	assert(G==approx(Gex))
+
+def test_rtgrad_trap():
+	h = 1
+	alpha = .1*h
+	X = np.array([[0.,0], [h,0], [-alpha,h], [h+alpha,h]])
+	trans = ElementTrans(X) 
+	el = RTElement(LobattoBasis, LegendreBasis, 1)
+
+	vhat = lambda xi: [xi[0]**2, xi[1]+1]
+	u = np.zeros(el.Nn)
+	dof = int(el.Nn/2)
+	for i in range(dof):
+		xi = el.nodes[i]
+		ev = vhat(xi)
+		u[i] = ev[0] 
+
+	for i in range(dof, el.Nn):
+		xi = el.nodes[i] 
+		ev = vhat(xi)
+		u[i] = ev[1] 
+
+	xi = np.array([.25, -.1])
+	J = trans.Jacobian(xi)
+	Ghat = el.CalcVGradShape(trans, xi)@u
+	G = 1/J*trans.F(xi)@Ghat.reshape((2,2))@trans.Finv(xi)
+
+	x = trans.Transform(xi)
+	Gex = np.array([
+		[
+			8*(-h**2+2*h*x[0]+alpha*x[1])/(h**2+2*alpha*x[1])**2, 
+			4*alpha*(h-2*x[0])*(-3*h**2 + 4*h*x[0]+2*alpha*x[1])/(h**2 + 2*alpha*x[1])**3
+		], [
+			0, 
+			4*h**2/(h**2 + 2*alpha*x[1])**2
+		] 
+		])
+	assert(G==approx(Gex))
+

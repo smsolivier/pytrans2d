@@ -51,6 +51,26 @@ class QDFactors:
 		E /= self.phi.Interpolate(trans.ElNo, xi)
 		return E 
 
+	def EvalUpwindTensor(self, face, ip):
+		nor = face.face.nor(ip) 
+		P = np.zeros((2,2))
+		phi = 0
+		for a in range(self.quad.N):
+			Omega = self.quad.Omega[a] 
+			w = self.quad.w[a] 
+			dot = Omega @ nor 
+			if (dot > 0 or face.boundary):
+				xi = face.ipt1.Transform(ip)
+				elno = face.ElNo1 
+			else:
+				xi = face.ipt2.Transform(ip) 
+				elno = face.ElNo2 
+			psi_at_ip = self.psi.GetAngle(a).Interpolate(elno, xi) 
+			P += np.outer(Omega, Omega)*psi_at_ip*w 
+			phi += psi_at_ip*w 
+
+		return P/phi 
+
 	def EvalG(self, fi, ip):
 		t = 0 
 		b = 0 

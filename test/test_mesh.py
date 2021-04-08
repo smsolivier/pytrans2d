@@ -131,3 +131,18 @@ def test_hotrans():
 	assert(trans.Transform([-1,0.])==approx([0,.5]))
 	assert(trans.Transform([-1,0.])==approx([0,.5]))
 	assert(trans.Area()==approx(1-4*alpha/3))
+
+def test_hessian_linear():
+	alpha = .1
+	trans = ElementTrans(np.array([[0,0], [1,0], [-alpha,1], [1+alpha,1]]))
+	H = trans.H([0.,0.])
+	Hex = np.array([[0,alpha/2,0], [0,0,0]])
+	assert(H==approx(Hex))
+
+def test_hessian_quadratic():
+	alpha = .1
+	X = np.array([[0.,0.], [.5,alpha], [1,0], [alpha,.5], [.5,.5], [1-alpha,.5], [0,1], [.5,1-alpha], [1,1]])
+	trans = ElementTrans(X)
+	H = trans.H([.25,-.1])
+	Hex = np.array([[0, -.2*alpha, .5*alpha], [-.2*alpha, .5*alpha,0]])
+	assert(H==approx(Hex))

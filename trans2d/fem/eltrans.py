@@ -19,7 +19,7 @@ class AffineTrans:
 		self.finv = np.linalg.inv(self.f)
 		self.finvT = self.finv.transpose()
 		self.c = np.array([np.sum(x), np.sum(y)])/4
-		self.H = np.zeros((2,2))
+		self.h = np.zeros((2,3))
 
 	def Transform(self, xi):
 		return self.f@xi + self.c
@@ -43,7 +43,7 @@ class AffineTrans:
 		return self.finvT 
 
 	def H(self, xi):
-		return self.H 
+		return self.h
 
 	def InverseMap(self, x, niter=20, tol=1e-14):
 		return np.dot(self.finv, x - self.c)

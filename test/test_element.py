@@ -73,6 +73,7 @@ def test_rtmodal(p):
 	qorder = 2*(p+1)+1
 	ip, w = quadrature.Get1D(qorder)
 	el = RTElement(LobattoBasis, LegendreBasis, p)
+	el.modal = True
 
 	# bottom face zeroth moment 
 	ii = np.zeros(el.Nn)
@@ -247,12 +248,14 @@ def test_rtmodal(p):
 def test_rtdiv():
 	p = 0 
 	el = RTElement(LobattoBasis, LegendreBasis, p)
+	el.modal = True
 	div = np.array([-1,1,-1,1])/4
 	assert(el.CalcDivShape([0,0.])==approx(div))
 
 def test_rtinterp():
 	p = 0 
 	el = RTElement(LobattoBasis, LegendreBasis, p) 
+	el.modal = True
 	dof = np.array([-4,8,4,-4])
 	vs = el.CalcVShape([-1,1])
 	val = np.dot(vs, dof)

@@ -19,6 +19,7 @@ class AffineTrans:
 		self.finv = np.linalg.inv(self.f)
 		self.finvT = self.finv.transpose()
 		self.c = np.array([np.sum(x), np.sum(y)])/4
+		self.H = np.zeros((2,2))
 
 	def Transform(self, xi):
 		return self.f@xi + self.c
@@ -40,6 +41,9 @@ class AffineTrans:
 
 	def FinvT(self, xi):
 		return self.finvT 
+
+	def H(self, xi):
+		return self.H 
 
 	def InverseMap(self, x, niter=20, tol=1e-14):
 		return np.dot(self.finv, x - self.c)
@@ -102,6 +106,13 @@ class ElementTrans:
 	def FinvT(self, xi):
 		F = self.F(xi)
 		return np.linalg.inv(F).transpose()
+
+	def H(self, xi):
+		h = np.zeros((3, self.box.shape[0]))
+		h[0,:] = PolyVal2D(self.basis.dB2, self.basis.B, np.array(xi))
+		h[1,:] = PolyVal2D(self.basis.dB, self.basis.dB, np.array(xi))
+		h[2,:] = PolyVal2D(self.basis.B, self.basis.dB2, np.array(xi))		
+		return linalg.Mult(1., h, self.box).transpose().copy(order='C')
 
 	def Jacobian(self, xi):
 		return np.linalg.det(self.F(xi))

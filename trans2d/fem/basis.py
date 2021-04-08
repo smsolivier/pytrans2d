@@ -198,4 +198,6 @@ class RTBasis:
 			self.Cx[:,:,i] = cx[i,:].reshape((p+2,p+1))
 
 		self.dCy = np.polynomial.polynomial.polyder(self.Cy, axis=1).copy(order='C')
+		self.dCy2 = np.polynomial.polynomial.polyder(self.Cy, axis=0)
 		self.dCx = np.polynomial.polynomial.polyder(self.Cx, axis=0)
+		self.dCx2 = np.polynomial.polynomial.polyder(self.Cx, axis=1).copy(order='C')

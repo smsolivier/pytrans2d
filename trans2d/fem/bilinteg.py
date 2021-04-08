@@ -200,6 +200,20 @@ def VectorFEDivIntegrator(el1, el2, trans, c, qorder):
 
 	return elmat 
 
+def VectorFEDivIntegrator2(el1, el2, trans, c, qorder):
+	elmat = np.zeros((el1.Nn, el2.Nn))
+	ip, w = quadrature.Get(qorder)
+
+	for n in range(len(w)):
+		gs = el1.CalcVGradShape(ip[n]) 
+		# D = np.linalg.multi_dot([trans.Finv(ip[n]).T, c(trans.Transform(ip[n])), trans.F(ip[n]).T])
+		D = c(trans.Transform(ip[n]))
+		gsd = gs.T@D.flatten()
+		s = el2.CalcShape(ip[n]) 
+		linalg.AddOuter(-w[n], gsd, s, elmat) 
+
+	return elmat 
+
 def WeakMixDivIntegrator(el1, el2, trans, c, qorder):
 	elmat = np.zeros((el1.Nn, 2*el2.Nn))
 	ip, w = quadrature.Get(qorder)

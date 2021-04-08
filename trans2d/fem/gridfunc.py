@@ -34,6 +34,18 @@ class GridFunction:
 
 			self.SetDof(e, vals)
 
+	def ProjectRT(self, func):
+		for e in range(self.space.Ne):
+			trans = self.space.mesh.trans[e] 
+			vals = np.zeros(self.space.el.Nn)
+			for i in range(int(self.space.el.Nn/2)):
+				X = trans.Transform(self.space.el.nodes[i])
+				f = func(X) 
+				for d in range(self.space.vdim):
+					vals[i+d*int(self.space.el.Nn/2)] = f[d] 
+
+			self.SetDof(e, vals) 
+
 	def ProjectGF(self, gf):
 		for e in range(self.space.Ne):
 			vals = np.zeros(self.space.el.Nn)

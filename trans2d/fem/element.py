@@ -89,15 +89,18 @@ class RTElement:
 				self.nodes[idx,1] = self.by[1].ip[i] 
 
 		self.basis = basis.RTBasis(p) 
+		self.modal = False
 
 	def CalcShape(self, xi):
 		raise NotImplementedError('this is vector FE')
 
 	def CalcVShape(self, xi):
-		sx = PolyValTP(self.basis.Cx, np.array(xi))
-		sy = PolyValTP(self.basis.Cy, np.array(xi))
-		# sx = PolyVal2D(self.bx[0].B, self.bx[1].B, np.array(xi))
-		# sy = PolyVal2D(self.by[0].B, self.by[1].B, np.array(xi))
+		if (self.modal):
+			sx = PolyValTP(self.basis.Cx, np.array(xi))
+			sy = PolyValTP(self.basis.Cy, np.array(xi))
+		else:
+			sx = PolyVal2D(self.bx[0].B, self.bx[1].B, np.array(xi))
+			sy = PolyVal2D(self.by[0].B, self.by[1].B, np.array(xi))
 		return np.block([[sx, np.zeros(len(sx))], 
 			[np.zeros(len(sy)), sy]])
 
@@ -105,11 +108,28 @@ class RTElement:
 		vs = self.CalcVShape(xi) 
 		return 1/trans.Jacobian(xi)*np.dot(trans.F(xi), vs) 
 
+	def CalcVGradShape(self, xi):
+		gsx = np.zeros((2,int(self.Nn/2)))
+		gsy = np.zeros((2,int(self.Nn/2)))
+		if (self.modal):
+			gsx[0] = PolyValTP(self.basis.dCx, np.array(xi))
+			gsx[1] = PolyValTP(self.basis.dCx2, np.array(xi))
+			gsy[0] = PolyValTP(self.basis.dCy2, np.array(xi))
+			gsy[1] = PolyValTP(self.basis.dCy, np.array(xi))
+		else:
+			gsx[0] = PolyVal2D(self.bx[0].dB, self.bx[1].B, np.array(xi))
+			gsx[1] = PolyVal2D(self.bx[0].B, self.bx[1].dB, np.array(xi))
+			gsy[0] = PolyVal2D(self.by[0].dB, self.by[1].B, np.array(xi))
+			gsy[1] = PolyVal2D(self.by[0].B, self.by[1].dB, np.array(xi))
+		return np.block([[gsx, np.zeros(gsx.shape)], [np.zeros(gsy.shape), gsy]])
+
 	def CalcDivShape(self, xi):
-		dsx = PolyValTP(self.basis.dCx, np.array(xi))
-		dsy = PolyValTP(self.basis.dCy, np.array(xi))
-		# dsx = PolyVal2D(self.bx[0].dB, self.bx[1].B, np.array(xi))
-		# dsy = PolyVal2D(self.by[0].B, self.by[1].dB, np.array(xi))
+		if (self.modal):
+			dsx = PolyValTP(self.basis.dCx, np.array(xi))
+			dsy = PolyValTP(self.basis.dCy, np.array(xi))
+		else:
+			dsx = PolyVal2D(self.bx[0].dB, self.bx[1].B, np.array(xi))
+			dsy = PolyVal2D(self.by[0].B, self.by[1].dB, np.array(xi))
 		return np.concatenate((dsx, dsy)) 
 
 	def CalcPhysDivShape(self, trans, xi):

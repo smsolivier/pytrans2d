@@ -171,6 +171,8 @@ class AffineFaceTrans:
 		self.J = np.sqrt(np.dot(self.F, self.F))
 		nor = np.array([self.F[1], -self.F[0]])
 		self.nor = nor/np.linalg.norm(nor)
+		self.tan = np.array([self.F[0], self.F[1]])
+		self.tan /= np.linalg.norm(self.tan)
 
 	def Transform(self, xi):
 		return np.dot(self.F, xi) + self.c 
@@ -186,6 +188,9 @@ class AffineFaceTrans:
 
 	def Normal(self, xi):
 		return self.nor 
+
+	def Tangent(self, xi):
+		return self.tan 
 
 class FaceInfo:
 	def __init__(self, els, iptrans, trans, ftrans, orient, fno=-1):

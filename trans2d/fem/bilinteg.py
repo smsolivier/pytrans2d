@@ -207,7 +207,6 @@ def VectorFEDivIntegrator2(el1, el2, trans, c, qorder):
 	for n in range(len(w)):
 		gs = el1.CalcVGradShape(trans, ip[n]) 
 		D = np.linalg.multi_dot([trans.F(ip[n]).T, c(trans.Transform(ip[n])), trans.Finv(ip[n]).T])
-		# D = c(trans.Transform(ip[n]))
 		gsd = gs.T@D.flatten()
 		s = el2.CalcShape(ip[n]) 
 		linalg.AddOuter(-w[n], gsd, s, elmat) 

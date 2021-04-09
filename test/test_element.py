@@ -309,20 +309,51 @@ def test_rtgrad_trap():
 		ev = vhat(xi)
 		u[i] = ev[1] 
 
-	xi = np.array([.25, -.1])
-	J = trans.Jacobian(xi)
-	Ghat = el.CalcVGradShape(trans, xi)@u
-	G = 1/J*trans.F(xi)@Ghat.reshape((2,2))@trans.Finv(xi)
+	Xi = np.linspace(-1,1,10)
+	for r in Xi:
+		for s in Xi:
+			xi = np.array([r,s])
+			J = trans.Jacobian(xi)
+			Ghat = el.CalcVGradShape(trans, xi)@u
+			G = 1/J*trans.F(xi)@Ghat.reshape((2,2))@trans.Finv(xi)
 
-	x = trans.Transform(xi)
-	Gex = np.array([
-		[
-			8*(-h**2+2*h*x[0]+alpha*x[1])/(h**2+2*alpha*x[1])**2, 
-			4*alpha*(h-2*x[0])*(-3*h**2 + 4*h*x[0]+2*alpha*x[1])/(h**2 + 2*alpha*x[1])**3
-		], [
-			0, 
-			4*h**2/(h**2 + 2*alpha*x[1])**2
-		] 
-		])
-	assert(G==approx(Gex))
+			x = trans.Transform(xi)
+			Gex = lambda x: np.array([
+				[
+					8*(-h**2+2*h*x[0]+alpha*x[1])/(h**2+2*alpha*x[1])**2, 
+					4*alpha*(h-2*x[0])*(-3*h**2 + 4*h*x[0]+2*alpha*x[1])/(h**2 + 2*alpha*x[1])**3
+				], [
+					0, 
+					4*h**2/(h**2 + 2*alpha*x[1])**2
+				] 
+				])
+			assert(G==approx(Gex(x)))
 
+			E = np.array([[1/3, 1/15], [1/15, 1/3]])
+			cex = Gex(x).flatten()@E.flatten()
+			C = 1/J*Ghat@np.linalg.multi_dot([trans.F(xi).T, E, trans.Finv(xi).T]).flatten()
+			assert(C==approx(cex))
+
+def test_tanjump():
+	print()
+	alpha = 0
+	theta = np.pi/6
+	mesh = RectMesh(2,1)
+	mesh.nodes[-2,0] += alpha
+	rot = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta),np.cos(theta)]])
+	mesh.nodes = mesh.nodes@rot.T 
+	mesh = AbstractMesh(mesh.nodes, mesh.ele, 1)
+
+	face = mesh.iface[0]
+	T1 = face.trans1 
+	T2 = face.trans2 
+
+	ip = .25 
+	xi1 = face.ipt1.Transform(ip)
+	xi2 = face.ipt2.Transform(ip) 
+	nor = face.face.Normal(ip)
+	tau = face.face.Tangent(ip) 
+
+	E = np.array([[1/3, 1/10], [1/10, 1/3]])
+	En = E@nor 
+	print(En, En@nor*nor +En@tau*tau)

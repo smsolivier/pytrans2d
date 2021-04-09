@@ -52,6 +52,40 @@ def h1diffusion(Ne, p):
 	err = T.L2Error(lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]), 2*p+2)
 	return err 
 
+def h1diffusion_quadmesh(Ne, p):
+	Ne *= 2 
+	mesh = RectMesh(Ne, Ne)
+	h = 1/Ne 
+	for i in range(mesh.nodes.shape[0]):
+		for j in range(2):
+			if (mesh.nodes[i,j]>0 and mesh.nodes[i,j]<1):
+				mesh.nodes[i,j] = np.random.normal(mesh.nodes[i,j], h*.05)
+
+	theta = np.pi/6
+	rot = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta),np.cos(theta)]])
+	mesh.nodes = mesh.nodes@rot.T 
+	mesh = AbstractMesh(mesh.nodes, mesh.ele, 1)
+
+	space = H1Space(mesh, LobattoBasis, p)
+	K = Assemble(space, DiffusionIntegrator, lambda x: 1, 2*p+1)
+	def source(x):
+		X = rot.T@x 
+		return 2*np.pi**2*np.sin(np.pi*X[0])*np.sin(np.pi*X[1])
+	f = AssembleRHS(space, DomainIntegrator, source, 2*p+2)
+
+	K = K.tolil()
+	K[space.bnodes,:] = 0 
+	K[space.bnodes,space.bnodes] = 1
+	f[space.bnodes] = 0 
+
+	T = GridFunction(space)
+	T.data = spla.spsolve(K.tocsc(), f)
+
+	def exact(x):
+		X = rot.T@x 
+		return np.sin(np.pi*X[0])*np.sin(np.pi*X[1])
+	return T.L2Error(exact, 2*p+2)
+
 def mixdiffusion(Ne, p):
 	mesh = RectMesh(Ne, Ne)
 	phi_space = L2Space(mesh, LegendreBasis, p)
@@ -239,8 +273,11 @@ def ldgdiffusion(Ne, p):
 
 Ne = 3
 @pytest.mark.parametrize('p', [1, 2, 3, 4])
-@pytest.mark.parametrize('solver', [h1diffusion, mixdiffusion, rtdiffusion, convection, dgdiffusion, 
-	sn_direct, sn_sweep, p1, p1sa, vef, ldgdiffusion])
+@pytest.mark.parametrize('solver', 
+	[h1diffusion, h1diffusion_quadmesh, mixdiffusion, 
+		rtdiffusion, convection, dgdiffusion, 
+		sn_direct, sn_sweep, p1, p1sa, vef, ldgdiffusion
+	])
 def test_ooa(solver, p):
 	E1 = solver(Ne, p)
 	E2 = solver(2*Ne, p)

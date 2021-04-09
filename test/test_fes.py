@@ -103,6 +103,7 @@ def test_rt():
 
 	mesh = RectMesh(2,1) 
 	space = RTSpace(mesh, LobattoBasis, LegendreBasis, 0) 
+	space.el.modal = True
 	q = GridFunction(space) 
 	q.data = np.array([1., 5/2, 4, 0, -1, 0, -1]) 
 

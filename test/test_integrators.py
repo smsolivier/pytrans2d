@@ -194,6 +194,7 @@ def test_block():
 
 def test_rt0div():
 	rt = RTElement(LobattoBasis, LegendreBasis, 0) 
+	rt.modal = True
 	l2 = Element(LegendreBasis, 0) 
 
 	D = VectorFEDivIntegrator(l2, rt, trans, 1, 3) 
@@ -202,6 +203,7 @@ def test_rt0div():
 
 def test_rt0mass():
 	rt = RTElement(LobattoBasis, LegendreBasis, 0) 
+	rt.modal = True
 	M = VectorFEMassIntegrator(rt, trans, lambda x: 1, 3) 
 	Mex = np.array([[1/3, 1/6, 0, 0], [1/6, 1/3, 0, 0], [0, 0, 1/3, 1/6], [0, 0, 1/6, 1/3]])
 	assert(M==pytest.approx(Mex))

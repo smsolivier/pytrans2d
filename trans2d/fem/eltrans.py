@@ -3,6 +3,7 @@ import warnings
 import logging
 
 from ..ext.horner import PolyVal2D
+from ..ext.horner import PolyVal
 from ..ext import linalg 
 from .basis import LagrangeBasis
 from .. import utils
@@ -126,6 +127,15 @@ class ElementTrans:
 
 		return area 
 
+	def Centroid(self):
+		from .quadrature import quadrature
+		ip, w = quadrature.Get(2*self.p+1)
+		first = np.zeros(2)
+		for n in range(len(w)):
+			X = self.Transform(ip[n])
+			first += X*self.Jacobian(ip[n])*w[n] 
+		return first/self.Area()
+
 	def InverseMap(self, x, niter=20, tol=1e-13):
 		xi = np.array([0.,0.])
 		for n in range(niter):
@@ -202,6 +212,28 @@ class AffineFaceTrans:
 
 	def Tangent(self, xi):
 		return self.tan 
+
+class FaceTrans:
+	def __init__(self, line):
+		self.line = line 
+		self.p = line.shape[0] - 1 
+		self.basis = LagrangeBasis(self.p)
+
+	def Transform(self, xi):
+		B = PolyVal(self.basis.B, xi) 
+		return B@self.line
+
+	def F(self, xi):
+		dB = PolyVal(self.basis.dB, xi)
+		return dB@self.line 
+
+	def H(self, xi):
+		dB2 = PolyVal(self.basis.dB2, xi) 
+		return dB2@self.line 
+
+	def Normal(self, xi):
+		F = self.F(xi) 
+		return np.array([F[1], -F[0]])
 
 class FaceInfo:
 	def __init__(self, els, iptrans, trans, ftrans, orient, fno=-1):

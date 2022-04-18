@@ -235,6 +235,10 @@ class FaceTrans:
 		F = self.F(xi) 
 		return np.array([F[1], -F[0]])
 
+	def Jacobian(self, xi):
+		F = self.F(xi)
+		return np.sqrt(F.T@F)
+
 class FaceInfo:
 	def __init__(self, els, iptrans, trans, ftrans, orient, fno=-1):
 		self.ElNo1 = els[0]
